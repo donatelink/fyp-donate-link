@@ -80,9 +80,9 @@ export default function Login() {
                   <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
                     Password
                   </label>
-                  <a href="#" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                  <Link href="/auth/forgot-password" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
                     Forgot?
-                  </a>
+                  </Link>
                 </div>
                 <input
                   id="password"

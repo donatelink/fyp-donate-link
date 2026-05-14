@@ -22,18 +22,18 @@ export default function TrackDonation() {
       </Head>
       <div className="min-h-screen bg-zinc-50">
         <header className="border-b border-zinc-200 bg-white">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
             <Link href="/donor/dashboard" className="text-sm font-semibold text-emerald-600 hover:text-emerald-700">
               ← Back to dashboard
             </Link>
           </div>
         </header>
 
-        <main className="mx-auto max-w-3xl px-6 py-10">
+        <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
           <p className="text-xs uppercase tracking-wide text-zinc-500">Donation ID</p>
-          <h1 className="mt-1 font-mono text-lg text-zinc-900">{id || "..."}</h1>
+          <h1 className="mt-1 break-all font-mono text-base text-zinc-900 sm:text-lg">{id || "..."}</h1>
 
-          <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6">
+          <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
             <h2 className="text-base font-semibold text-zinc-900">Lifecycle</h2>
             <ol className="mt-6 space-y-5">
               {STAGES.map((s) => {

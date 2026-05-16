@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import DonationModal from "@/components/DonationModal";
 import supabase from "@/utils/supabase";
 
 export default function NgoPage() {
@@ -9,27 +10,37 @@ export default function NgoPage() {
   const { slug } = router.query;
   const [ngo, setNgo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [signedIn, setSignedIn] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
     let active = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("ngos")
-        .select("*")
-        .eq("slug", slug)
-        .eq("status", "approved")
-        .maybeSingle();
-      if (active) {
-        setNgo(data || null);
-        setLoading(false);
-      }
+      const [ngoRes, sessionRes] = await Promise.all([
+        supabase
+          .from("ngos")
+          .select("*")
+          .eq("slug", slug)
+          .eq("status", "approved")
+          .maybeSingle(),
+        supabase.auth.getSession(),
+      ]);
+      if (!active) return;
+      setNgo(ngoRes.data || null);
+      setSignedIn(!!sessionRes.data.session);
+      setLoading(false);
     })();
     return () => {
       active = false;
     };
   }, [slug]);
+
+  function handleDonate() {
+    if (signedIn) setModalOpen(true);
+    else router.push("/auth/login");
+  }
 
   return (
     <>
@@ -45,6 +56,12 @@ export default function NgoPage() {
             </Link>
           </div>
         </header>
+
+        <DonationModal
+          open={modalOpen}
+          ngo={ngo}
+          onClose={() => setModalOpen(false)}
+        />
 
         <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
           {loading && <p className="text-sm text-zinc-500">Loading...</p>}
@@ -108,16 +125,16 @@ export default function NgoPage() {
                   )}
                 </dl>
 
-                <Link
-                  href="/auth/login"
+                <button
+                  onClick={handleDonate}
                   className="mt-6 block w-full rounded-lg bg-emerald-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-emerald-700"
                 >
-                  Donate to {ngo.org_name}
-                </Link>
+                  {signedIn ? `Donate to ${ngo.org_name}` : "Sign in to donate"}
+                </button>
               </div>
 
               <p className="mt-4 text-center text-xs text-zinc-400">
-                Every donation to this NGO is tracked transparently on-chain.
+                Every donation to this NGO is tracked transparently through 5 stages.
               </p>
             </>
           )}

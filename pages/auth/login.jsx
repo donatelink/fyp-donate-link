@@ -33,7 +33,12 @@ export default function Login() {
       .eq("id", data.user.id)
       .single();
 
-    const dest = profile?.role === "admin" ? "/admin/dashboard" : "/donor/dashboard";
+    const dest =
+      profile?.role === "admin"
+        ? "/admin/dashboard"
+        : profile?.role === "ngo"
+        ? "/ngo/dashboard"
+        : "/donor/dashboard";
     router.push(dest);
   }
 

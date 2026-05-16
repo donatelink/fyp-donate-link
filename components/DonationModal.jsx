@@ -1,21 +1,16 @@
 import { useEffect, useState } from "react";
 import FeeBreakdown, { calculateFees } from "./FeeBreakdown";
+import supabase from "@/utils/supabase";
 
 const DONATION_TYPES = [
-  { id: "sadaqah", emoji: "🤲", name: "Sadaqah", desc: "Voluntary charity", group: "islamic" },
-  { id: "sadaqah-jariyah", emoji: "🌱", name: "Sadaqah Jariyah", desc: "Ongoing impact", group: "islamic" },
-  { id: "fitrana", emoji: "🌙", name: "Fitrana", desc: "$10 per family member", group: "islamic" },
-  { id: "waqf", emoji: "🏛️", name: "Waqf", desc: "Permanent endowment", group: "islamic" },
-  { id: "one-time", emoji: "💳", name: "One-Time", desc: "Single donation", group: "general" },
-  { id: "monthly", emoji: "🔄", name: "Monthly", desc: "Auto recurring", group: "general" },
-  { id: "campaign", emoji: "🎯", name: "Campaign", desc: "Specific goal", group: "general" },
-  { id: "emergency", emoji: "🆘", name: "Emergency", desc: "Urgent relief", group: "general" },
-];
-
-const CAUSES = [
-  "Food & Water", "Education", "Medical Aid", "Orphan Care",
-  "Masjid Building", "Disaster Relief", "Climate & Environment",
-  "Clean Water", "Children Education", "Hunger Crisis",
+  { id: "sadaqah", emoji: "🤲", name: "Sadaqah", desc: "Voluntary charity" },
+  { id: "sadaqah-jariyah", emoji: "🌱", name: "Sadaqah Jariyah", desc: "Ongoing impact" },
+  { id: "zakat", emoji: "🌙", name: "Zakat", desc: "Obligatory alms" },
+  { id: "waqf", emoji: "🏛️", name: "Waqf", desc: "Permanent endowment" },
+  { id: "one-time", emoji: "💳", name: "One-Time", desc: "Single donation" },
+  { id: "monthly", emoji: "🔄", name: "Monthly", desc: "Auto recurring" },
+  { id: "campaign", emoji: "🎯", name: "Campaign", desc: "Specific goal" },
+  { id: "emergency", emoji: "🆘", name: "Emergency", desc: "Urgent relief" },
 ];
 
 const PRESET_AMOUNTS = [10, 25, 50, 100, 500];
@@ -28,22 +23,26 @@ const PAYMENT_METHODS = [
 
 const STEPS = ["Type", "Amount", "Payment", "Confirm"];
 
-export default function DonationModal({ open, onClose }) {
+export default function DonationModal({ open, onClose, ngo, onDonated }) {
   const [step, setStep] = useState(0);
   const [type, setType] = useState(null);
-  const [cause, setCause] = useState(null);
   const [amount, setAmount] = useState(50);
   const [customAmount, setCustomAmount] = useState("");
   const [method, setMethod] = useState("polygon");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setStep(0);
     setType(null);
-    setCause(null);
     setAmount(50);
     setCustomAmount("");
     setMethod("polygon");
+    setSubmitting(false);
+    setErrorMsg("");
+    setDone(false);
   }, [open]);
 
   useEffect(() => {
@@ -54,11 +53,11 @@ export default function DonationModal({ open, onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !ngo) return null;
 
   const finalAmount = customAmount ? Number(customAmount) : amount;
   const canNext =
-    (step === 0 && type && cause) ||
+    (step === 0 && type) ||
     (step === 1 && finalAmount > 0) ||
     (step === 2 && method) ||
     step === 3;
@@ -68,11 +67,42 @@ export default function DonationModal({ open, onClose }) {
     else handleSubmit();
   }
 
-  function handleSubmit() {
-    // TODO: wire to backend + Stripe/MetaMask
-    console.log("DONATE", { type, cause, amount: finalAmount, method });
-    alert(`Donation submitted (mock):\n${type} → ${cause}\n$${finalAmount} via ${method}`);
-    onClose();
+  async function handleSubmit() {
+    setSubmitting(true);
+    setErrorMsg("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setErrorMsg("Please sign in as a donor to donate.");
+      setSubmitting(false);
+      return;
+    }
+
+    const typeLabel = DONATION_TYPES.find((t) => t.id === type)?.name || "One-Time";
+
+    const { error } = await supabase.from("donations").insert({
+      donor_id: user.id,
+      ngo_id: ngo.id,
+      amount: finalAmount,
+      donation_type: typeLabel,
+      stage: 1,
+      donor_name: user.user_metadata?.name || user.email,
+      donor_email: user.email,
+      ngo_name: ngo.org_name,
+    });
+
+    setSubmitting(false);
+
+    if (error) {
+      setErrorMsg(error.message);
+      return;
+    }
+
+    setDone(true);
+    if (onDonated) onDonated();
   }
 
   return (
@@ -84,56 +114,75 @@ export default function DonationModal({ open, onClose }) {
         className="flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <Header step={step} onClose={onClose} />
-        <div className="flex-1 overflow-y-auto px-6 py-6">
-          {step === 0 && (
-            <StepType
-              type={type}
-              setType={setType}
-              cause={cause}
-              setCause={setCause}
+        {done ? (
+          <div className="px-6 py-10 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl">
+              ✅
+            </div>
+            <h2 className="mt-4 text-xl font-bold text-zinc-900">Donation submitted</h2>
+            <p className="mt-2 text-sm text-zinc-600">
+              Your ${finalAmount.toFixed(2)} donation to{" "}
+              <span className="font-semibold">{ngo.org_name}</span> is now at{" "}
+              <span className="font-semibold">Stage 1 — Pending</span>. Track it from your dashboard.
+            </p>
+            <button
+              onClick={onClose}
+              className="mt-6 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <>
+            <Header step={step} ngoName={ngo.org_name} onClose={onClose} />
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              {errorMsg && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {errorMsg}
+                </div>
+              )}
+              {step === 0 && <StepType type={type} setType={setType} />}
+              {step === 1 && (
+                <StepAmount
+                  amount={amount}
+                  setAmount={setAmount}
+                  customAmount={customAmount}
+                  setCustomAmount={setCustomAmount}
+                />
+              )}
+              {step === 2 && (
+                <StepPayment method={method} setMethod={setMethod} amount={finalAmount} />
+              )}
+              {step === 3 && (
+                <StepConfirm
+                  ngoName={ngo.org_name}
+                  type={type}
+                  amount={finalAmount}
+                  method={method}
+                />
+              )}
+            </div>
+            <Footer
+              step={step}
+              canNext={canNext}
+              submitting={submitting}
+              onBack={() => setStep(Math.max(0, step - 1))}
+              onNext={handleNext}
             />
-          )}
-          {step === 1 && (
-            <StepAmount
-              amount={amount}
-              setAmount={setAmount}
-              customAmount={customAmount}
-              setCustomAmount={setCustomAmount}
-            />
-          )}
-          {step === 2 && (
-            <StepPayment
-              method={method}
-              setMethod={setMethod}
-              amount={finalAmount}
-            />
-          )}
-          {step === 3 && (
-            <StepConfirm
-              type={type}
-              cause={cause}
-              amount={finalAmount}
-              method={method}
-            />
-          )}
-        </div>
-        <Footer
-          step={step}
-          canNext={canNext}
-          onBack={() => setStep(Math.max(0, step - 1))}
-          onNext={handleNext}
-        />
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-function Header({ step, onClose }) {
+function Header({ step, ngoName, onClose }) {
   return (
     <div className="border-b border-zinc-200 px-6 py-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-zinc-900">New Donation</h2>
+        <h2 className="text-base font-semibold text-zinc-900">
+          Donate to <span className="text-emerald-700">{ngoName}</span>
+        </h2>
         <button
           onClick={onClose}
           aria-label="Close"
@@ -167,70 +216,52 @@ function Header({ step, onClose }) {
   );
 }
 
-function Footer({ step, canNext, onBack, onNext }) {
+function Footer({ step, canNext, submitting, onBack, onNext }) {
   return (
     <div className="flex items-center justify-between border-t border-zinc-200 bg-zinc-50 px-6 py-4">
       <button
         onClick={onBack}
-        disabled={step === 0}
+        disabled={step === 0 || submitting}
         className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 hover:enabled:border-zinc-400"
       >
         Back
       </button>
       <button
         onClick={onNext}
-        disabled={!canNext}
+        disabled={!canNext || submitting}
         className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {step === STEPS.length - 1 ? "Donate Now" : "Continue →"}
+        {step === STEPS.length - 1
+          ? submitting
+            ? "Donating..."
+            : "Donate Now"
+          : "Continue →"}
       </button>
     </div>
   );
 }
 
-function StepType({ type, setType, cause, setCause }) {
+function StepType({ type, setType }) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-sm font-semibold text-zinc-900">Donation Type</h3>
-        <p className="text-xs text-zinc-500">Choose what kind of donation you want to give.</p>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {DONATION_TYPES.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setType(t.id)}
-              className={`rounded-xl border p-3 text-left transition ${
-                type === t.id
-                  ? "border-emerald-500 bg-emerald-50"
-                  : "border-zinc-200 bg-white hover:border-zinc-300"
-              }`}
-            >
-              <div className="text-xl">{t.emoji}</div>
-              <div className="mt-1 text-sm font-semibold text-zinc-900">{t.name}</div>
-              <div className="text-xs text-zinc-500">{t.desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-sm font-semibold text-zinc-900">Cause</h3>
-        <p className="text-xs text-zinc-500">Where should your donation go?</p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {CAUSES.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCause(c)}
-              className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
-                cause === c
-                  ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                  : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
+    <div>
+      <h3 className="text-sm font-semibold text-zinc-900">Donation Type</h3>
+      <p className="text-xs text-zinc-500">Choose what kind of donation you want to give.</p>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {DONATION_TYPES.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setType(t.id)}
+            className={`rounded-xl border p-3 text-left transition ${
+              type === t.id
+                ? "border-emerald-500 bg-emerald-50"
+                : "border-zinc-200 bg-white hover:border-zinc-300"
+            }`}
+          >
+            <div className="text-xl">{t.emoji}</div>
+            <div className="mt-1 text-sm font-semibold text-zinc-900">{t.name}</div>
+            <div className="text-xs text-zinc-500">{t.desc}</div>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -272,7 +303,7 @@ function StepAmount({ amount, setAmount, customAmount, setCustomAmount }) {
             value={customAmount}
             onChange={(e) => setCustomAmount(e.target.value)}
             placeholder="Enter amount"
-            className="w-full rounded-lg border border-zinc-300 py-2 pl-7 pr-3 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            className="w-full rounded-lg border border-zinc-300 py-2 pl-7 pr-3 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
           />
         </div>
       </div>
@@ -317,7 +348,7 @@ function StepPayment({ method, setMethod, amount }) {
   );
 }
 
-function StepConfirm({ type, cause, amount, method }) {
+function StepConfirm({ ngoName, type, amount, method }) {
   const typeLabel = DONATION_TYPES.find((t) => t.id === type)?.name || type;
   const methodLabel = PAYMENT_METHODS.find((m) => m.id === method)?.label || method;
   const { total } = calculateFees(amount, method);
@@ -325,11 +356,11 @@ function StepConfirm({ type, cause, amount, method }) {
   return (
     <div>
       <h3 className="text-sm font-semibold text-zinc-900">Review your donation</h3>
-      <p className="text-xs text-zinc-500">Verify everything before confirming on-chain.</p>
+      <p className="text-xs text-zinc-500">Verify everything before confirming.</p>
 
       <dl className="mt-4 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
+        <Summary label="NGO" value={ngoName} />
         <Summary label="Type" value={typeLabel} />
-        <Summary label="Cause" value={cause} />
         <Summary label="Amount" value={`$${amount.toFixed(2)}`} />
         <Summary label="Payment" value={methodLabel} />
         <Summary label="Total charge" value={`$${total.toFixed(2)}`} highlight />
@@ -337,7 +368,7 @@ function StepConfirm({ type, cause, amount, method }) {
 
       <p className="mt-4 text-xs text-zinc-500">
         By clicking <strong>Donate Now</strong>, your donation enters <strong>Stage 1: Pending</strong> and
-        you'll get an email at every step.
+        the NGO will update its progress through all 5 stages.
       </p>
     </div>
   );

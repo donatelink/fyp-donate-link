@@ -55,20 +55,10 @@ export default function Register() {
     setLoading(true);
 
     if (isNgo) {
-      const { data, error } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: { data: { name: form.orgName, role: "ngo" } },
-      });
-
-      if (error) {
-        setErrorMsg(error.message);
-        setLoading(false);
-        return;
-      }
-
+      // NGO applications create no account here — the admin reviews the
+      // application, and an account is created (via email invite) on approval.
       const { error: insertError } = await supabase.from("ngos").insert({
-        user_id: data.user?.id ?? null,
+        user_id: null,
         org_name: form.orgName,
         reg_number: form.regNumber,
         contact_person: form.contactPerson,
@@ -138,8 +128,9 @@ export default function Register() {
                 </div>
                 <h1 className="mt-4 text-2xl font-bold text-zinc-900">Application submitted</h1>
                 <p className="mt-2 text-sm text-zinc-600">
-                  Thanks for applying. Our team will review <span className="font-semibold">{form.orgName}</span> and,
-                  once approved, share your unique NGO donation page link.
+                  Thanks for applying. Our team will review{" "}
+                  <span className="font-semibold">{form.orgName}</span>. Once approved, you'll get an
+                  email to set your password and access your NGO dashboard.
                 </p>
                 <Link
                   href="/"
@@ -184,8 +175,8 @@ export default function Register() {
                   {isNgo ? (
                     <>
                       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-                        NGO accounts are reviewed by an admin before activation. Fill in your
-                        organization details below.
+                        NGO applications are verified by an admin. Once approved, we email you a link
+                        to set your password — no password needed now.
                       </div>
 
                       <div>
@@ -342,21 +333,23 @@ export default function Register() {
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
-                      Password
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      required
-                      minLength={8}
-                      value={form.password}
-                      onChange={(e) => update("password", e.target.value)}
-                      className={inputClass}
-                      placeholder="Min. 8 characters"
-                    />
-                  </div>
+                  {!isNgo && (
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
+                        Password
+                      </label>
+                      <input
+                        id="password"
+                        type="password"
+                        required
+                        minLength={8}
+                        value={form.password}
+                        onChange={(e) => update("password", e.target.value)}
+                        className={inputClass}
+                        placeholder="Min. 8 characters"
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="submit"

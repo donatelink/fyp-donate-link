@@ -4,12 +4,6 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import supabase from "@/utils/supabase";
 
-const MOCK_PENDING = [
-  { id: "d_003", donor: "Ayesha K.", cause: "Orphan Care", amount: 25, stage: 2, txHash: "0x4a2f..." },
-  { id: "d_004", donor: "John D.", cause: "Climate", amount: 500, stage: 2, txHash: "0x8d11..." },
-  { id: "d_005", donor: "Hassan M.", cause: "Medical Aid", amount: 200, stage: 3, txHash: "0x2c91..." },
-];
-
 const STAGE_LABEL = { 1: "Pending", 2: "Confirmed", 3: "Allocated", 4: "Transferred", 5: "Completed" };
 
 const STATUS_BADGE = {
@@ -18,14 +12,9 @@ const STATUS_BADGE = {
   rejected: "bg-red-100 text-red-700",
 };
 
-function makeSlug(name) {
-  const base = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  const suffix = Math.random().toString(36).slice(2, 6);
-  return `${base || "ngo"}-${suffix}`;
+function fmtDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString();
 }
 
 export default function AdminDashboard() {
@@ -36,8 +25,14 @@ export default function AdminDashboard() {
   const [actingId, setActingId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
+  const [donations, setDonations] = useState([]);
+  const [donLoading, setDonLoading] = useState(true);
+  const [donError, setDonError] = useState("");
+  const [advancingId, setAdvancingId] = useState(null);
+
   useEffect(() => {
     loadNgos();
+    loadDonations();
   }, []);
 
   async function loadNgos() {
@@ -52,14 +47,39 @@ export default function AdminDashboard() {
     setNgoLoading(false);
   }
 
+  async function loadDonations() {
+    setDonLoading(true);
+    setDonError("");
+    const { data, error } = await supabase
+      .from("donations")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) setDonError(error.message);
+    else setDonations(data || []);
+    setDonLoading(false);
+  }
+
   async function approve(ngo) {
     setActingId(ngo.id);
-    const slug = ngo.slug || makeSlug(ngo.org_name);
-    const { error } = await supabase
-      .from("ngos")
-      .update({ status: "approved", slug })
-      .eq("id", ngo.id);
-    if (error) setNgoError(error.message);
+    setNgoError("");
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setNgoError("Your admin session expired — please sign in again.");
+      setActingId(null);
+      return;
+    }
+    const res = await fetch("/api/approve-ngo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ ngoId: ngo.id }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) setNgoError(json.error || "Approval failed.");
     else await loadNgos();
     setActingId(null);
   }
@@ -73,6 +93,25 @@ export default function AdminDashboard() {
     if (error) setNgoError(error.message);
     else await loadNgos();
     setActingId(null);
+  }
+
+  async function advanceStage(d) {
+    if (d.stage >= 5) return;
+    const note = window.prompt(
+      `Advancing to Stage ${d.stage + 1} — ${STAGE_LABEL[d.stage + 1]}.\nAdd an update note for the donor (optional):`,
+      d.note || ""
+    );
+    if (note === null) return;
+
+    setAdvancingId(d.id);
+    setDonError("");
+    const patch = { stage: d.stage + 1, updated_at: new Date().toISOString() };
+    if (note.trim()) patch.note = note.trim();
+
+    const { error } = await supabase.from("donations").update(patch).eq("id", d.id);
+    if (error) setDonError(error.message);
+    else await loadDonations();
+    setAdvancingId(null);
   }
 
   function ngoLink(slug) {
@@ -96,6 +135,9 @@ export default function AdminDashboard() {
   }
 
   const pendingCount = ngos.filter((n) => n.status === "pending").length;
+  const inProgress = donations.filter((d) => d.stage < 5).length;
+  const completed = donations.filter((d) => d.stage === 5).length;
+  const totalVolume = donations.reduce((sum, d) => sum + Number(d.amount), 0);
 
   return (
     <>
@@ -223,87 +265,119 @@ export default function AdminDashboard() {
           <section className="mt-12">
             <h2 className="text-xl font-bold text-zinc-900 sm:text-2xl">Donation Lifecycle</h2>
             <p className="mt-1 text-sm text-zinc-600">
-              Advance donations through their stages and upload proof of allocation.
+              Every donation across all NGOs. You can advance a stage to support an NGO.
             </p>
 
+            {donError && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {donError}
+              </div>
+            )}
+
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-              <StatCard label="Awaiting Action" value="3" />
-              <StatCard label="In Allocation" value="1" />
-              <StatCard label="Completed Today" value="12" />
-              <StatCard label="Total Volume" value="$48,290" />
+              <StatCard label="Total Donations" value={donations.length} />
+              <StatCard label="In Progress" value={inProgress} />
+              <StatCard label="Completed" value={completed} />
+              <StatCard label="Total Volume" value={`$${totalVolume}`} />
             </div>
 
             <div className="mt-8 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-              <div className="flex flex-col gap-3 border-b border-zinc-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
-                <h2 className="text-base font-semibold text-zinc-900">Pending Donations</h2>
-                <input
-                  type="search"
-                  placeholder="Search donor or cause..."
-                  className="w-full rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 sm:w-auto"
-                />
+              <div className="border-b border-zinc-200 px-4 py-3 sm:px-5 sm:py-4">
+                <h2 className="text-base font-semibold text-zinc-900">All Donations</h2>
               </div>
 
-              {/* Mobile: card list */}
-              <ul className="divide-y divide-zinc-100 md:hidden">
-                {MOCK_PENDING.map((d) => (
-                  <li key={d.id} className="px-4 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="font-semibold text-zinc-900">{d.donor}</div>
-                        <div className="mt-0.5 text-xs text-zinc-500">{d.cause}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-zinc-900">${d.amount}</div>
-                        <span className="mt-1 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
-                          {d.stage} · {STAGE_LABEL[d.stage]}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-2 truncate font-mono text-xs text-zinc-500">
-                      TX: {d.txHash}
-                    </div>
-                    <button className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
-                      Advance Stage →
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {donLoading && (
+                <p className="px-4 py-10 text-center text-sm text-zinc-500">Loading donations...</p>
+              )}
 
-              {/* Desktop: table */}
-              <div className="hidden md:block">
-                <table className="w-full text-sm">
-                  <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-                    <tr>
-                      <th className="px-5 py-3">Donor</th>
-                      <th className="px-5 py-3">Cause</th>
-                      <th className="px-5 py-3">Amount</th>
-                      <th className="px-5 py-3">Stage</th>
-                      <th className="px-5 py-3">TX Hash</th>
-                      <th className="px-5 py-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MOCK_PENDING.map((d) => (
-                      <tr key={d.id} className="border-t border-zinc-100">
-                        <td className="px-5 py-4 font-medium text-zinc-900">{d.donor}</td>
-                        <td className="px-5 py-4 text-zinc-700">{d.cause}</td>
-                        <td className="px-5 py-4 font-semibold text-zinc-900">${d.amount}</td>
-                        <td className="px-5 py-4">
-                          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
-                            {d.stage} · {STAGE_LABEL[d.stage]}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 font-mono text-xs text-zinc-500">{d.txHash}</td>
-                        <td className="px-5 py-4 text-right">
-                          <button className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
-                            Advance Stage →
+              {!donLoading && donations.length === 0 && (
+                <p className="px-4 py-10 text-center text-sm text-zinc-500">No donations yet.</p>
+              )}
+
+              {!donLoading && donations.length > 0 && (
+                <>
+                  {/* Mobile: card list */}
+                  <ul className="divide-y divide-zinc-100 md:hidden">
+                    {donations.map((d) => (
+                      <li key={d.id} className="px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-zinc-900">{d.donor_name}</div>
+                            <div className="mt-0.5 text-xs text-zinc-500">
+                              → {d.ngo_name} · {fmtDate(d.created_at)}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-zinc-900">${d.amount}</div>
+                            <span className="mt-1 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
+                              {d.stage} · {STAGE_LABEL[d.stage]}
+                            </span>
+                          </div>
+                        </div>
+                        {d.stage < 5 ? (
+                          <button
+                            onClick={() => advanceStage(d)}
+                            disabled={advancingId === d.id}
+                            className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+                          >
+                            {advancingId === d.id ? "Saving..." : "Advance Stage →"}
                           </button>
-                        </td>
-                      </tr>
+                        ) : (
+                          <p className="mt-3 text-center text-xs font-semibold text-emerald-600">
+                            ✓ Completed
+                          </p>
+                        )}
+                      </li>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </ul>
+
+                  {/* Desktop: table */}
+                  <div className="hidden md:block">
+                    <table className="w-full text-sm">
+                      <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
+                        <tr>
+                          <th className="px-5 py-3">Donor</th>
+                          <th className="px-5 py-3">NGO</th>
+                          <th className="px-5 py-3">Amount</th>
+                          <th className="px-5 py-3">Stage</th>
+                          <th className="px-5 py-3">Date</th>
+                          <th className="px-5 py-3 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {donations.map((d) => (
+                          <tr key={d.id} className="border-t border-zinc-100">
+                            <td className="px-5 py-4 font-medium text-zinc-900">{d.donor_name}</td>
+                            <td className="px-5 py-4 text-zinc-700">{d.ngo_name}</td>
+                            <td className="px-5 py-4 font-semibold text-zinc-900">${d.amount}</td>
+                            <td className="px-5 py-4">
+                              <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
+                                {d.stage} · {STAGE_LABEL[d.stage]}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4 text-zinc-500">{fmtDate(d.created_at)}</td>
+                            <td className="px-5 py-4 text-right">
+                              {d.stage < 5 ? (
+                                <button
+                                  onClick={() => advanceStage(d)}
+                                  disabled={advancingId === d.id}
+                                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+                                >
+                                  {advancingId === d.id ? "Saving..." : "Advance Stage →"}
+                                </button>
+                              ) : (
+                                <span className="text-xs font-semibold text-emerald-600">
+                                  ✓ Completed
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </div>
           </section>
         </main>

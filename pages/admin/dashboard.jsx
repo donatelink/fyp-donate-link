@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import StageAdvanceModal from "@/components/StageAdvanceModal";
 import supabase from "@/utils/supabase";
 
 const STAGE_LABEL = { 1: "Pending", 2: "Confirmed", 3: "Allocated", 4: "Transferred", 5: "Completed" };
@@ -28,7 +29,7 @@ export default function AdminDashboard() {
   const [donations, setDonations] = useState([]);
   const [donLoading, setDonLoading] = useState(true);
   const [donError, setDonError] = useState("");
-  const [advancingId, setAdvancingId] = useState(null);
+  const [advanceDon, setAdvanceDon] = useState(null);
 
   useEffect(() => {
     loadNgos();
@@ -95,25 +96,6 @@ export default function AdminDashboard() {
     setActingId(null);
   }
 
-  async function advanceStage(d) {
-    if (d.stage >= 5) return;
-    const note = window.prompt(
-      `Advancing to Stage ${d.stage + 1} — ${STAGE_LABEL[d.stage + 1]}.\nAdd an update note for the donor (optional):`,
-      d.note || ""
-    );
-    if (note === null) return;
-
-    setAdvancingId(d.id);
-    setDonError("");
-    const patch = { stage: d.stage + 1, updated_at: new Date().toISOString() };
-    if (note.trim()) patch.note = note.trim();
-
-    const { error } = await supabase.from("donations").update(patch).eq("id", d.id);
-    if (error) setDonError(error.message);
-    else await loadDonations();
-    setAdvancingId(null);
-  }
-
   function ngoLink(slug) {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     return `${origin}/ngo/${slug}`;
@@ -164,6 +146,13 @@ export default function AdminDashboard() {
             </div>
           </div>
         </header>
+
+        <StageAdvanceModal
+          open={!!advanceDon}
+          donation={advanceDon}
+          onClose={() => setAdvanceDon(null)}
+          onAdvanced={loadDonations}
+        />
 
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
           {/* NGO Applications */}
@@ -316,11 +305,10 @@ export default function AdminDashboard() {
                         </div>
                         {d.stage < 5 ? (
                           <button
-                            onClick={() => advanceStage(d)}
-                            disabled={advancingId === d.id}
-                            className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+                            onClick={() => setAdvanceDon(d)}
+                            className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
                           >
-                            {advancingId === d.id ? "Saving..." : "Advance Stage →"}
+                            Advance Stage →
                           </button>
                         ) : (
                           <p className="mt-3 text-center text-xs font-semibold text-emerald-600">
@@ -359,11 +347,10 @@ export default function AdminDashboard() {
                             <td className="px-5 py-4 text-right">
                               {d.stage < 5 ? (
                                 <button
-                                  onClick={() => advanceStage(d)}
-                                  disabled={advancingId === d.id}
-                                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+                                  onClick={() => setAdvanceDon(d)}
+                                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
                                 >
-                                  {advancingId === d.id ? "Saving..." : "Advance Stage →"}
+                                  Advance Stage →
                                 </button>
                               ) : (
                                 <span className="text-xs font-semibold text-emerald-600">

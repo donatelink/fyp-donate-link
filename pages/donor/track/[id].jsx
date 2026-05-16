@@ -6,16 +6,26 @@ import supabase from "@/utils/supabase";
 
 const STAGES = [
   { num: 1, emoji: "⏳", title: "Pending", desc: "Donation initiated" },
-  { num: 2, emoji: "✅", title: "Confirmed", desc: "Payment confirmed" },
+  { num: 2, emoji: "✅", title: "Confirmed", desc: "Payment confirmed by the NGO" },
   { num: 3, emoji: "📋", title: "Allocated", desc: "NGO assigned the funds to a cause" },
-  { num: 4, emoji: "💸", title: "Transferred", desc: "Funds sent to beneficiary" },
+  { num: 4, emoji: "💸", title: "Transferred", desc: "Funds sent to the beneficiary" },
   { num: 5, emoji: "🌟", title: "Completed", desc: "Impact delivered" },
 ];
+
+function isPdf(url) {
+  return url.toLowerCase().split("?")[0].endsWith(".pdf");
+}
+
+function fmtDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString();
+}
 
 export default function TrackDonation() {
   const router = useRouter();
   const { id } = router.query;
   const [donation, setDonation] = useState(null);
+  const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,13 +33,23 @@ export default function TrackDonation() {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data: don } = await supabase
         .from("donations")
         .select("*")
         .eq("id", id)
         .maybeSingle();
+      let ups = [];
+      if (don) {
+        const { data } = await supabase
+          .from("donation_updates")
+          .select("*")
+          .eq("donation_id", id)
+          .order("stage", { ascending: true });
+        ups = data || [];
+      }
       if (active) {
-        setDonation(data || null);
+        setDonation(don || null);
+        setUpdates(ups);
         setLoading(false);
       }
     })();
@@ -86,21 +106,16 @@ export default function TrackDonation() {
                 <p className="mt-3 break-all font-mono text-xs text-zinc-400">ID: {donation.id}</p>
               </div>
 
-              {donation.note && (
-                <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                    Latest update from the NGO
-                  </p>
-                  <p className="mt-1 text-sm text-emerald-800">{donation.note}</p>
-                </div>
-              )}
-
               <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
-                <h2 className="text-base font-semibold text-zinc-900">Lifecycle</h2>
+                <h2 className="text-base font-semibold text-zinc-900">Lifecycle & Proof</h2>
+                <p className="text-xs text-zinc-500">
+                  Follow your donation through all 5 stages with proof of impact.
+                </p>
                 <ol className="mt-6 space-y-5">
                   {STAGES.map((s) => {
                     const reached = s.num <= currentStage;
                     const current = s.num === currentStage;
+                    const update = updates.find((u) => u.stage === s.num);
                     return (
                       <li key={s.num} className="flex items-start gap-4">
                         <div
@@ -124,6 +139,42 @@ export default function TrackDonation() {
                           <p className={`mt-0.5 text-sm ${reached ? "text-zinc-600" : "text-zinc-400"}`}>
                             {s.desc}
                           </p>
+
+                          {update && (update.note || update.proof_url) && (
+                            <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                              {update.note && (
+                                <p className="text-sm text-emerald-800">{update.note}</p>
+                              )}
+                              {update.proof_url &&
+                                (isPdf(update.proof_url) ? (
+                                  <a
+                                    href={update.proof_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="mt-2 inline-block text-sm font-semibold text-emerald-700 underline"
+                                  >
+                                    📄 View proof document
+                                  </a>
+                                ) : (
+                                  <a
+                                    href={update.proof_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <img
+                                      src={update.proof_url}
+                                      alt={`Proof for stage ${s.num}`}
+                                      className="mt-2 max-h-56 w-full rounded-lg border border-emerald-200 object-cover"
+                                    />
+                                  </a>
+                                ))}
+                              {update.created_at && (
+                                <p className="mt-1 text-xs text-emerald-600">
+                                  Updated {fmtDate(update.created_at)}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </li>
                     );

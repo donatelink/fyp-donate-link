@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import StageAdvanceModal from "@/components/StageAdvanceModal";
 import supabase from "@/utils/supabase";
 
 const STAGE_LABELS = ["Pending", "Confirmed", "Allocated", "Transferred", "Completed"];
@@ -26,7 +27,7 @@ export default function NgoDashboard() {
   const [donations, setDonations] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
-  const [actingId, setActingId] = useState(null);
+  const [advanceDon, setAdvanceDon] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -95,25 +96,6 @@ export default function NgoDashboard() {
     setDonations(data || []);
   }
 
-  async function advanceStage(d) {
-    if (d.stage >= 5) return;
-    const note = window.prompt(
-      `Advancing to Stage ${d.stage + 1} — ${STAGE_LABELS[d.stage]}.\nAdd an update note for the donor (optional):`,
-      d.note || ""
-    );
-    if (note === null) return; // cancelled
-
-    setActingId(d.id);
-    setErrorMsg("");
-    const patch = { stage: d.stage + 1, updated_at: new Date().toISOString() };
-    if (note.trim()) patch.note = note.trim();
-
-    const { error } = await supabase.from("donations").update(patch).eq("id", d.id);
-    if (error) setErrorMsg(error.message);
-    else await loadDonations();
-    setActingId(null);
-  }
-
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.push("/");
@@ -162,6 +144,13 @@ export default function NgoDashboard() {
             </div>
           </div>
         </header>
+
+        <StageAdvanceModal
+          open={!!advanceDon}
+          donation={advanceDon}
+          onClose={() => setAdvanceDon(null)}
+          onAdvanced={loadDonations}
+        />
 
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
           {loading && <p className="text-sm text-zinc-500">Loading your dashboard…</p>}
@@ -250,13 +239,10 @@ export default function NgoDashboard() {
                             <div className="font-bold text-zinc-900">${d.amount}</div>
                             {d.stage < 5 ? (
                               <button
-                                onClick={() => advanceStage(d)}
-                                disabled={actingId === d.id}
-                                className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+                                onClick={() => setAdvanceDon(d)}
+                                className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
                               >
-                                {actingId === d.id
-                                  ? "Saving..."
-                                  : `Advance → ${STAGE_LABELS[d.stage]}`}
+                                Advance → {STAGE_LABELS[d.stage]}
                               </button>
                             ) : (
                               <span className="mt-2 inline-block text-xs font-semibold text-emerald-600">

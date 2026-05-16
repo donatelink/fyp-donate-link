@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
 export default function Login() {
@@ -89,13 +90,11 @@ export default function Login() {
                     Forgot?
                   </Link>
                 </div>
-                <input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                   placeholder="••••••••"
                 />
               </div>

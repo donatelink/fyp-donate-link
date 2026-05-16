@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
 export default function AcceptInvite() {
@@ -124,14 +125,12 @@ export default function AcceptInvite() {
                     <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
                       Password
                     </label>
-                    <input
+                    <PasswordInput
                       id="password"
-                      type="password"
                       required
                       minLength={8}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                       placeholder="Min. 8 characters"
                     />
                   </div>
@@ -140,14 +139,12 @@ export default function AcceptInvite() {
                     <label htmlFor="confirm" className="block text-sm font-medium text-zinc-700">
                       Confirm password
                     </label>
-                    <input
+                    <PasswordInput
                       id="confirm"
-                      type="password"
                       required
                       minLength={8}
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
-                      className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                       placeholder="Re-enter password"
                     />
                   </div>

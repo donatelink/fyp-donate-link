@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
 const ROLES = [
@@ -338,14 +339,12 @@ export default function Register() {
                       <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
                         Password
                       </label>
-                      <input
+                      <PasswordInput
                         id="password"
-                        type="password"
                         required
                         minLength={8}
                         value={form.password}
                         onChange={(e) => update("password", e.target.value)}
-                        className={inputClass}
                         placeholder="Min. 8 characters"
                       />
                     </div>

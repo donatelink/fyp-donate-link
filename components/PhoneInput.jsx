@@ -12,6 +12,8 @@ const DIAL_OPTIONS = (() => {
   return out.sort((a, b) => Number(a.dial.slice(1)) - Number(b.dial.slice(1)));
 })();
 
+const MAX_DIGITS = 11;
+
 export default function PhoneInput({ id, value, onChange, required, placeholder = "3001234567" }) {
   const { dial, number } = parsePhone(value);
 
@@ -20,7 +22,7 @@ export default function PhoneInput({ id, value, onChange, required, placeholder 
   }
 
   function setNumber(raw) {
-    const digits = raw.replace(/\D/g, "");
+    const digits = raw.replace(/\D/g, "").slice(0, MAX_DIGITS);
     onChange(`${dial} ${digits}`);
   }
 
@@ -44,6 +46,10 @@ export default function PhoneInput({ id, value, onChange, required, placeholder 
         inputMode="numeric"
         autoComplete="tel-national"
         required={required}
+        maxLength={MAX_DIGITS}
+        minLength={required ? MAX_DIGITS : undefined}
+        pattern={`\\d{${MAX_DIGITS}}`}
+        title={`Enter exactly ${MAX_DIGITS} digits`}
         value={number}
         onChange={(e) => setNumber(e.target.value)}
         placeholder={placeholder}

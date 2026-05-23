@@ -275,6 +275,7 @@ export default function Register() {
                       </label>
                       <PhoneInput
                         id="phone"
+                        variant="pill"
                         required
                         value={form.phone}
                         onChange={(v) => update("phone", v)}
@@ -286,10 +287,10 @@ export default function Register() {
                       </label>
                       <CountrySelect
                         id="country"
+                        variant="pill"
                         required
                         value={form.country}
                         onChange={(v) => update("country", v)}
-                        className="rounded-full px-5 py-3"
                       />
                     </div>
                   </div>

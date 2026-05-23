@@ -14,8 +14,27 @@ const DIAL_OPTIONS = (() => {
 
 const MAX_DIGITS = 11;
 
-export default function PhoneInput({ id, value, onChange, required, placeholder = "3001234567" }) {
+const VARIANTS = {
+  default: {
+    select: "rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200",
+    input: "flex-1 min-w-0 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200",
+  },
+  pill: {
+    select: "rounded-full border border-zinc-300 bg-white px-3 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200",
+    input: "flex-1 min-w-0 rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200",
+  },
+};
+
+export default function PhoneInput({
+  id,
+  value,
+  onChange,
+  required,
+  variant = "default",
+  placeholder = "3001234567",
+}) {
   const { dial, number } = parsePhone(value);
+  const v = VARIANTS[variant] || VARIANTS.default;
 
   function setDial(newDial) {
     onChange(`${newDial} ${number}`);
@@ -27,12 +46,12 @@ export default function PhoneInput({ id, value, onChange, required, placeholder 
   }
 
   return (
-    <div className="mt-1 flex gap-2">
+    <div className="mt-1 flex w-full gap-2">
       <select
         value={dial}
         onChange={(e) => setDial(e.target.value)}
         aria-label="Country dial code"
-        className="rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        className={v.select}
       >
         {DIAL_OPTIONS.map((c) => (
           <option key={c.code} value={c.dial}>
@@ -53,12 +72,8 @@ export default function PhoneInput({ id, value, onChange, required, placeholder 
         value={number}
         onChange={(e) => setNumber(e.target.value)}
         placeholder={placeholder}
-        className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+        className={v.input}
       />
     </div>
   );
-}
-
-function _defaultDial() {
-  return DEFAULT_DIAL;
 }

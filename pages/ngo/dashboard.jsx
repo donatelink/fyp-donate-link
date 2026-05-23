@@ -268,6 +268,30 @@ export default function NgoDashboard() {
               </div>
             )}
 
+            {!loading && ngo && ngo.status === "paused" && (
+              <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5">
+                <h2 className="text-base font-semibold text-amber-800">
+                  ⏸ Your NGO is currently paused
+                </h2>
+                <p className="mt-1 text-sm text-amber-700">
+                  You are hidden from donor and beneficiary dashboards. Existing donations and
+                  requests continue. Contact the admin to resume.
+                </p>
+              </div>
+            )}
+
+            {!loading && ngo && ngo.status === "deleted" && (
+              <div className="mt-4 rounded-2xl border border-red-300 bg-red-50 p-4 sm:p-5">
+                <h2 className="text-base font-semibold text-red-800">
+                  Your NGO has been removed
+                </h2>
+                <p className="mt-1 text-sm text-red-700">
+                  This NGO profile was deleted by an admin. Donations and reviews are preserved
+                  for record-keeping but you can no longer receive new donations or requests.
+                </p>
+              </div>
+            )}
+
             {!loading && ngo && view === "donations" && (
               <DonationsView
                 ngo={ngo}

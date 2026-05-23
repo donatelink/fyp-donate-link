@@ -11,6 +11,8 @@ const STATUS_BADGE = {
   pending: "bg-amber-100 text-amber-700",
   approved: "bg-emerald-100 text-emerald-700",
   rejected: "bg-red-100 text-red-700",
+  paused: "bg-zinc-200 text-zinc-700",
+  deleted: "bg-red-200 text-red-800",
 };
 
 const MENU = [
@@ -123,6 +125,28 @@ export default function AdminDashboard() {
     if (e) setError(e.message);
     else await loadAll();
     setActingId(null);
+  }
+
+  async function setStatus(ngo, newStatus) {
+    setActingId(ngo.id);
+    setError("");
+    const { error: e } = await supabase
+      .from("ngos")
+      .update({ status: newStatus })
+      .eq("id", ngo.id);
+    if (e) setError(e.message);
+    else await loadAll();
+    setActingId(null);
+  }
+
+  async function softDelete(ngo) {
+    if (
+      !window.confirm(
+        `Soft-delete "${ngo.org_name}"? It will be hidden from all dashboards but its donations and reviews will be preserved.`
+      )
+    )
+      return;
+    await setStatus(ngo, "deleted");
   }
 
   function ngoLink(slug) {
@@ -324,7 +348,15 @@ export default function AdminDashboard() {
                     }}
                   />
                 )}
-                {view === "ngos" && <NgosView ngoStats={ngoStats} ngoLink={ngoLink} />}
+                {view === "ngos" && (
+                  <NgosView
+                    ngoStats={ngoStats}
+                    ngoLink={ngoLink}
+                    actingId={actingId}
+                    setStatus={setStatus}
+                    softDelete={softDelete}
+                  />
+                )}
                 {view === "donors" && <DonorsView donors={donors} />}
                 {view === "beneficiaries" && <BeneficiariesView beneficiaries={beneficiaries} />}
                 {view === "requests" && <RequestsView requests={requests} />}
@@ -586,7 +618,7 @@ function DonationsView({ donations, requests, onAdvance }) {
 }
 
 /* ---------- NGOs ---------- */
-function NgosView({ ngoStats, ngoLink }) {
+function NgosView({ ngoStats, ngoLink, actingId, setStatus, softDelete }) {
   if (ngoStats.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
@@ -633,6 +665,54 @@ function NgosView({ ngoStats, ngoLink }) {
           </dl>
           {n.status === "approved" && n.slug && (
             <p className="mt-2 break-all text-xs text-emerald-700">{ngoLink(n.slug)}</p>
+          )}
+
+          {(n.status === "approved" || n.status === "paused") && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
+              {n.status === "approved" ? (
+                <button
+                  onClick={() => setStatus(n, "paused")}
+                  disabled={actingId === n.id}
+                  className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:enabled:border-zinc-400 disabled:opacity-60"
+                >
+                  {actingId === n.id ? "..." : "⏸ Pause"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStatus(n, "approved")}
+                  disabled={actingId === n.id}
+                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+                >
+                  {actingId === n.id ? "..." : "▶ Resume"}
+                </button>
+              )}
+              <button
+                onClick={() => softDelete(n)}
+                disabled={actingId === n.id}
+                className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:enabled:bg-red-50 disabled:opacity-60"
+              >
+                Delete
+              </button>
+              {n.status === "paused" && (
+                <span className="text-xs text-zinc-500">
+                  Hidden from donors/beneficiaries until resumed.
+                </span>
+              )}
+            </div>
+          )}
+          {n.status === "deleted" && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
+              <button
+                onClick={() => setStatus(n, "approved")}
+                disabled={actingId === n.id}
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+              >
+                {actingId === n.id ? "..." : "Restore"}
+              </button>
+              <span className="text-xs text-zinc-500">
+                Soft-deleted. Donations and reviews preserved.
+              </span>
+            </div>
           )}
         </div>
       ))}

@@ -19,7 +19,7 @@ export default function AuthLayout({
       </Head>
       <div className="flex min-h-screen flex-col bg-white md:flex-row">
         {/* Image side */}
-        <div className={`relative hidden overflow-hidden rounded-[2.5rem] bg-gradient-to-br md:block md:w-1/2 ${imageGradient}`}>
+        <div className={`relative hidden overflow-hidden bg-gradient-to-br md:block md:w-1/2 ${imageGradient}`}>
           {imageUrl && (
             <img
               src={imageUrl}
@@ -44,7 +44,7 @@ export default function AuthLayout({
 
         {/* Form side */}
         <div className="flex min-h-screen w-full flex-1 flex-col overflow-y-auto bg-white px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-12">
-          <div className="mx-auto w-full max-w-xl">{children}</div>
+          <div className="mx-auto my-auto w-full max-w-xl">{children}</div>
         </div>
       </div>
     </>

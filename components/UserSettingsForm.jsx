@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
 import PasswordInput from "@/components/PasswordInput";
+import PhoneInput from "@/components/PhoneInput";
 import supabase from "@/utils/supabase";
 
 export default function UserSettingsForm() {
@@ -177,13 +178,10 @@ export default function UserSettingsForm() {
         <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
           Phone Number
         </label>
-        <input
+        <PhoneInput
           id="phone"
-          type="tel"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+92 300 1234567"
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          onChange={setPhone}
         />
       </div>
 

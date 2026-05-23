@@ -2,7 +2,9 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import CountrySelect from "@/components/CountrySelect";
 import PasswordInput from "@/components/PasswordInput";
+import PhoneInput from "@/components/PhoneInput";
 import supabase from "@/utils/supabase";
 
 const ROLES = [
@@ -224,14 +226,11 @@ export default function Register() {
                         <label htmlFor="phone" className="block text-sm font-medium text-zinc-700">
                           Phone Number
                         </label>
-                        <input
+                        <PhoneInput
                           id="phone"
-                          type="tel"
                           required
                           value={form.phone}
-                          onChange={(e) => update("phone", e.target.value)}
-                          className={inputClass}
-                          placeholder="+92 300 1234567"
+                          onChange={(v) => update("phone", v)}
                         />
                       </div>
 
@@ -239,14 +238,11 @@ export default function Register() {
                         <label htmlFor="country" className="block text-sm font-medium text-zinc-700">
                           Country
                         </label>
-                        <input
+                        <CountrySelect
                           id="country"
-                          type="text"
                           required
                           value={form.country}
-                          onChange={(e) => update("country", e.target.value)}
-                          className={inputClass}
-                          placeholder="Country of operation"
+                          onChange={(v) => update("country", v)}
                         />
                       </div>
 

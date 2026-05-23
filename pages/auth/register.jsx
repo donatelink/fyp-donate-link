@@ -10,8 +10,8 @@ import supabase from "@/utils/supabase";
 
 const ROLES = [
   { value: "donor", label: "Donor", desc: "Give to causes worldwide" },
-  { value: "ngo", label: "NGO", desc: "Receive verified funds" },
   { value: "beneficiary", label: "Beneficiary", desc: "Request help from an NGO" },
+  { value: "ngo", label: "NGO", desc: "Receive verified funds" },
 ];
 
 const pillInput =

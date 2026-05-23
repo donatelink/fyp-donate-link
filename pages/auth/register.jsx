@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthLayout from "@/components/AuthLayout";
 import CountrySelect from "@/components/CountrySelect";
+import GoogleButton from "@/components/GoogleButton";
 import PasswordInput from "@/components/PasswordInput";
 import PhoneInput from "@/components/PhoneInput";
 import supabase from "@/utils/supabase";
@@ -11,11 +12,17 @@ const ROLES = [
   { value: "donor", label: "Donor", desc: "Give to causes worldwide" },
   { value: "ngo", label: "NGO", desc: "Receive verified funds" },
   { value: "beneficiary", label: "Beneficiary", desc: "Request help from an NGO" },
-  { value: "admin", label: "Admin", desc: "Manage donation lifecycle" },
 ];
 
 const pillInput =
-  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-200";
+  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
+
+function destForRole(role) {
+  if (role === "admin") return "/admin/dashboard";
+  if (role === "ngo") return "/ngo/dashboard";
+  if (role === "beneficiary") return "/beneficiary/dashboard";
+  return "/donor/dashboard";
+}
 
 export default function Register() {
   const router = useRouter();
@@ -37,6 +44,24 @@ export default function Register() {
   const [applied, setApplied] = useState(false);
 
   const isNgo = form.role === "ngo";
+
+  // If a Google OAuth callback lands here, route by role.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !active) return;
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (active) router.replace(destForRole(profile?.role));
+    })();
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   function update(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -94,21 +119,14 @@ export default function Register() {
       return;
     }
 
-    const dest =
-      form.role === "admin"
-        ? "/admin/dashboard"
-        : form.role === "beneficiary"
-        ? "/beneficiary/dashboard"
-        : "/donor/dashboard";
-    router.push(dest);
+    router.push(destForRole(form.role));
   }
 
   return (
     <AuthLayout
       title="Create Account"
-      imageUrl="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=900&h=1200&fit=crop&q=80&auto=format"
-      imageGradient="from-blue-950 via-blue-800 to-indigo-700"
-      outerGradient="from-blue-100 via-white to-indigo-50"
+      imageUrl="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=900&h=1400&fit=crop&q=80&auto=format"
+      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
       tagline={{ eyebrow: "Join DonateLink", line: "Give, receive, and trace every step of the impact." }}
     >
       <Link
@@ -137,7 +155,7 @@ export default function Register() {
             </p>
             <Link
               href="/"
-              className="mt-8 inline-block w-full rounded-full bg-zinc-900 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-zinc-800"
+              className="mt-8 inline-block w-full rounded-full bg-emerald-600 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Back to home
             </Link>
@@ -147,7 +165,7 @@ export default function Register() {
             <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Create an Account</h1>
             <p className="mt-3 text-sm text-zinc-600">
               Already have an account?{" "}
-              <Link href="/auth/login" className="font-bold text-zinc-900 underline underline-offset-4">
+              <Link href="/auth/login" className="font-bold text-emerald-700 underline underline-offset-4 hover:text-emerald-800">
                 Log in
               </Link>
             </p>
@@ -161,7 +179,7 @@ export default function Register() {
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-zinc-900">I am a...</label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {ROLES.map((r) => (
                     <button
                       key={r.value}
@@ -169,12 +187,12 @@ export default function Register() {
                       onClick={() => update("role", r.value)}
                       className={`rounded-2xl border px-3 py-2.5 text-left text-xs transition ${
                         form.role === r.value
-                          ? "border-zinc-900 bg-zinc-900 text-white"
+                          ? "border-emerald-600 bg-emerald-600 text-white"
                           : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400"
                       }`}
                     >
                       <div className="font-semibold">{r.label}</div>
-                      <div className={form.role === r.value ? "text-white/70" : "text-zinc-500"}>
+                      <div className={form.role === r.value ? "text-white/80" : "text-zinc-500"}>
                         {r.desc}
                       </div>
                     </button>
@@ -283,7 +301,7 @@ export default function Register() {
                       rows={3}
                       value={form.description}
                       onChange={(e) => update("description", e.target.value)}
-                      className="mt-1 w-full rounded-3xl border border-zinc-300 px-5 py-3 text-sm text-black focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-200"
+                      className="mt-1 w-full rounded-3xl border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                       placeholder="Briefly describe your mission and the work you do."
                     />
                   </div>
@@ -340,7 +358,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading
                   ? isNgo
@@ -351,6 +369,17 @@ export default function Register() {
                   : "Create Account"}
               </button>
             </form>
+
+            {!isNgo && (
+              <>
+                <div className="my-6 flex items-center gap-3 text-xs text-zinc-500">
+                  <div className="h-px flex-1 bg-zinc-200" />
+                  <span>or</span>
+                  <div className="h-px flex-1 bg-zinc-200" />
+                </div>
+                <GoogleButton label="Sign up with Google" />
+              </>
+            )}
           </>
         )}
       </div>

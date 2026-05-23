@@ -4,7 +4,7 @@ import AuthLayout from "@/components/AuthLayout";
 import supabase from "@/utils/supabase";
 
 const pillInput =
-  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-200";
+  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -34,9 +34,8 @@ export default function ForgotPassword() {
   return (
     <AuthLayout
       title="Forgot Password"
-      imageUrl="https://images.unsplash.com/photo-1518608774889-b04d2abe7702?w=900&h=1200&fit=crop&q=80&auto=format"
-      imageGradient="from-purple-900 via-violet-800 to-fuchsia-700"
-      outerGradient="from-purple-100 via-white to-fuchsia-50"
+      imageUrl="https://images.unsplash.com/photo-1518608774889-b04d2abe7702?w=900&h=1400&fit=crop&q=80&auto=format"
+      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
       tagline={{ eyebrow: "Account recovery", line: "We'll get you back in, fast." }}
     >
       <Link
@@ -73,7 +72,7 @@ export default function ForgotPassword() {
             </p>
             <Link
               href="/auth/login"
-              className="mt-8 inline-block w-full rounded-full bg-zinc-900 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-zinc-800"
+              className="mt-8 inline-block w-full rounded-full bg-emerald-600 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Back to Sign In
             </Link>
@@ -110,7 +109,7 @@ export default function ForgotPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Sending link..." : "Send Verification Code"}
               </button>
@@ -118,7 +117,7 @@ export default function ForgotPassword() {
 
             <p className="mt-6 text-sm text-zinc-600">
               Remembered it?{" "}
-              <Link href="/auth/login" className="font-bold text-zinc-900 underline underline-offset-4">
+              <Link href="/auth/login" className="font-bold text-emerald-700 underline underline-offset-4 hover:text-emerald-800">
                 Back to sign in
               </Link>
             </p>

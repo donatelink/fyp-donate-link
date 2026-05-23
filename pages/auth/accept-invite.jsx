@@ -63,9 +63,8 @@ export default function AcceptInvite() {
   return (
     <AuthLayout
       title="Activate NGO Account"
-      imageUrl="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=900&h=1200&fit=crop&q=80&auto=format"
-      imageGradient="from-emerald-900 via-teal-700 to-cyan-600"
-      outerGradient="from-emerald-50 via-white to-teal-50"
+      imageUrl="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=900&h=1400&fit=crop&q=80&auto=format"
+      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
       tagline={{ eyebrow: "You're approved", line: "Set your password and start receiving donations." }}
     >
       <Link
@@ -91,7 +90,7 @@ export default function AcceptInvite() {
             </p>
             <Link
               href="/"
-              className="mt-8 inline-block w-full rounded-full bg-zinc-900 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-zinc-800"
+              className="mt-8 inline-block w-full rounded-full bg-emerald-600 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Back to home
             </Link>
@@ -154,7 +153,7 @@ export default function AcceptInvite() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Activating..." : "Activate Account"}
               </button>

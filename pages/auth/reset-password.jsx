@@ -64,9 +64,8 @@ export default function ResetPassword() {
   return (
     <AuthLayout
       title="Reset Password"
-      imageUrl="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&h=1200&fit=crop&q=80&auto=format"
-      imageGradient="from-sky-900 via-blue-700 to-indigo-600"
-      outerGradient="from-sky-100 via-white to-indigo-50"
+      imageUrl="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&h=1400&fit=crop&q=80&auto=format"
+      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
       tagline={{ eyebrow: "Fresh start", line: "A new password and you're back on track." }}
     >
       <Link
@@ -92,7 +91,7 @@ export default function ResetPassword() {
             </p>
             <Link
               href="/auth/forgot-password"
-              className="mt-8 inline-block w-full rounded-full bg-zinc-900 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-zinc-800"
+              className="mt-8 inline-block w-full rounded-full bg-emerald-600 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Request a new link
             </Link>
@@ -155,7 +154,7 @@ export default function ResetPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Updating..." : "Reset Password"}
               </button>

@@ -1,12 +1,20 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthLayout from "@/components/AuthLayout";
+import GoogleButton from "@/components/GoogleButton";
 import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
 const pillInput =
-  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-200";
+  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
+
+function destForRole(role) {
+  if (role === "admin") return "/admin/dashboard";
+  if (role === "ngo") return "/ngo/dashboard";
+  if (role === "beneficiary") return "/beneficiary/dashboard";
+  return "/donor/dashboard";
+}
 
 export default function Login() {
   const router = useRouter();
@@ -14,6 +22,25 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // If we got here via an OAuth callback, Supabase will already have set the
+  // session — route to the right dashboard.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !active) return;
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (active) router.replace(destForRole(profile?.role));
+    })();
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -34,23 +61,14 @@ export default function Login() {
       .eq("id", data.user.id)
       .single();
 
-    const dest =
-      profile?.role === "admin"
-        ? "/admin/dashboard"
-        : profile?.role === "ngo"
-        ? "/ngo/dashboard"
-        : profile?.role === "beneficiary"
-        ? "/beneficiary/dashboard"
-        : "/donor/dashboard";
-    router.push(dest);
+    router.push(destForRole(profile?.role));
   }
 
   return (
     <AuthLayout
       title="Sign In"
-      imageUrl="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=900&h=1200&fit=crop&q=80&auto=format"
-      imageGradient="from-rose-900 via-red-700 to-orange-600"
-      outerGradient="from-rose-100 via-white to-orange-100"
+      imageUrl="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=900&h=1400&fit=crop&q=80&auto=format"
+      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
       tagline={{ eyebrow: "Welcome back", line: "Pick up where your impact left off." }}
     >
       <Link
@@ -67,7 +85,7 @@ export default function Login() {
         <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Log in</h1>
         <p className="mt-3 text-sm text-zinc-600">
           Don't have an account?{" "}
-          <Link href="/auth/register" className="font-bold text-zinc-900 underline underline-offset-4">
+          <Link href="/auth/register" className="font-bold text-emerald-700 underline underline-offset-4 hover:text-emerald-800">
             Create an Account
           </Link>
         </p>
@@ -109,7 +127,7 @@ export default function Login() {
             <div className="mt-2 flex justify-end">
               <Link
                 href="/auth/forgot-password"
-                className="text-sm font-bold text-zinc-900 underline underline-offset-4"
+                className="text-sm font-bold text-emerald-700 underline underline-offset-4 hover:text-emerald-800"
               >
                 Forgot Password?
               </Link>
@@ -119,11 +137,19 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Log in"}
           </button>
         </form>
+
+        <div className="my-6 flex items-center gap-3 text-xs text-zinc-500">
+          <div className="h-px flex-1 bg-zinc-200" />
+          <span>or</span>
+          <div className="h-px flex-1 bg-zinc-200" />
+        </div>
+
+        <GoogleButton label="Continue with Google" />
       </div>
     </AuthLayout>
   );

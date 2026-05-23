@@ -333,7 +333,7 @@ export default function Register() {
                         ? "Submitting application..."
                         : "Creating account..."
                       : isNgo
-                      ? "Submit NGO Application"
+                      ? "Submit NGO Form"
                       : "Create Account"}
                   </button>
                 </form>

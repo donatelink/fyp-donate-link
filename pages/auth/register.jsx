@@ -202,30 +202,28 @@ export default function Register() {
 
               {isNgo ? (
                 <>
-                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs text-emerald-700">
-                    NGO applications are verified by an admin. Once approved, we email you a link
-                    to set your password — no password needed now.
-                  </div>
-
-                  <div>
-                    <label htmlFor="orgName" className="block text-sm font-semibold text-zinc-900">
-                      Organization Name
-                    </label>
-                    <input
-                      id="orgName"
-                      type="text"
-                      required
-                      value={form.orgName}
-                      onChange={(e) => update("orgName", e.target.value)}
-                      className={pillInput}
-                      placeholder="e.g. Helping Hands Foundation"
-                    />
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs text-emerald-700">
+                    Verified by an admin · we'll email a link to set your password once approved.
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
+                      <label htmlFor="orgName" className="block text-sm font-semibold text-zinc-900">
+                        Organization Name
+                      </label>
+                      <input
+                        id="orgName"
+                        type="text"
+                        required
+                        value={form.orgName}
+                        onChange={(e) => update("orgName", e.target.value)}
+                        className={pillInput}
+                        placeholder="Helping Hands Foundation"
+                      />
+                    </div>
+                    <div>
                       <label htmlFor="regNumber" className="block text-sm font-semibold text-zinc-900">
-                        Registration / License Number
+                        Registration No.
                       </label>
                       <input
                         id="regNumber"
@@ -234,9 +232,12 @@ export default function Register() {
                         value={form.regNumber}
                         onChange={(e) => update("regNumber", e.target.value)}
                         className={pillInput}
-                        placeholder="Official NGO registration no."
+                        placeholder="Official no."
                       />
                     </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label htmlFor="contactPerson" className="block text-sm font-semibold text-zinc-900">
                         Contact Person
@@ -248,7 +249,21 @@ export default function Register() {
                         value={form.contactPerson}
                         onChange={(e) => update("contactPerson", e.target.value)}
                         className={pillInput}
-                        placeholder="Full name of representative"
+                        placeholder="Full name"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-semibold text-zinc-900">
+                        Email Address
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        required
+                        value={form.email}
+                        onChange={(e) => update("email", e.target.value)}
+                        className={pillInput}
+                        placeholder="you@example.com"
                       />
                     </div>
                   </div>
@@ -300,61 +315,61 @@ export default function Register() {
                     <textarea
                       id="description"
                       required
-                      rows={3}
+                      rows={2}
                       value={form.description}
                       onChange={(e) => update("description", e.target.value)}
                       className="mt-1 w-full rounded-3xl border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                      placeholder="Briefly describe your mission and the work you do."
+                      placeholder="Briefly describe your mission and work."
                     />
                   </div>
                 </>
               ) : (
-                <div>
-                  <label htmlFor="name" className="block text-sm font-semibold text-zinc-900">
-                    Full Name
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    required
-                    value={form.name}
-                    onChange={(e) => update("name", e.target.value)}
-                    className={pillInput}
-                    placeholder="Your name"
-                  />
-                </div>
-              )}
+                <>
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-semibold text-zinc-900">
+                      Full Name
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      required
+                      value={form.name}
+                      onChange={(e) => update("name", e.target.value)}
+                      className={pillInput}
+                      placeholder="Your name"
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-zinc-900">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => update("email", e.target.value)}
-                  className={pillInput}
-                  placeholder="you@example.com"
-                />
-              </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-semibold text-zinc-900">
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={form.email}
+                      onChange={(e) => update("email", e.target.value)}
+                      className={pillInput}
+                      placeholder="you@example.com"
+                    />
+                  </div>
 
-              {!isNgo && (
-                <div>
-                  <label htmlFor="password" className="block text-sm font-semibold text-zinc-900">
-                    Password
-                  </label>
-                  <PasswordInput
-                    id="password"
-                    variant="pill"
-                    required
-                    minLength={8}
-                    value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    placeholder="Min. 8 characters"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-semibold text-zinc-900">
+                      Password
+                    </label>
+                    <PasswordInput
+                      id="password"
+                      variant="pill"
+                      required
+                      minLength={8}
+                      value={form.password}
+                      onChange={(e) => update("password", e.target.value)}
+                      placeholder="Min. 8 characters"
+                    />
+                  </div>
+                </>
               )}
 
               <button

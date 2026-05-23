@@ -117,10 +117,16 @@ export default function AdminDashboard() {
   }
 
   async function reject(ngo) {
+    if (
+      !window.confirm(
+        `Reject and delete "${ngo.org_name}"'s application? This removes them from the system.`
+      )
+    )
+      return;
     setActingId(ngo.id);
     const { error: e } = await supabase
       .from("ngos")
-      .update({ status: "rejected" })
+      .update({ status: "deleted" })
       .eq("id", ngo.id);
     if (e) setError(e.message);
     else await loadAll();

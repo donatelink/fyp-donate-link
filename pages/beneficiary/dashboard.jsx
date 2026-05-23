@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
 import RatingModal from "@/components/RatingModal";
 import RequestFundingModal from "@/components/RequestFundingModal";
+import ReviewsModal from "@/components/ReviewsModal";
 import StarRating from "@/components/StarRating";
 import supabase from "@/utils/supabase";
 
@@ -36,6 +37,7 @@ export default function BeneficiaryDashboard() {
   const [userId, setUserId] = useState(null);
   const [modalNgo, setModalNgo] = useState(null);
   const [ratingNgo, setRatingNgo] = useState(null);
+  const [reviewsNgo, setReviewsNgo] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
@@ -195,6 +197,12 @@ export default function BeneficiaryDashboard() {
           onSaved={reloadRatings}
         />
 
+        <ReviewsModal
+          open={!!reviewsNgo}
+          ngo={reviewsNgo}
+          onClose={() => setReviewsNgo(null)}
+        />
+
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
           <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">Get help when you need it</h1>
           <p className="mt-1 text-sm text-zinc-600">
@@ -274,9 +282,14 @@ export default function BeneficiaryDashboard() {
                               </span>
                             </div>
                           </div>
-                          <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => setReviewsNgo(ngo)}
+                            title="See all reviews"
+                            className="mt-2 inline-flex w-fit items-center rounded-md px-1 py-0.5 hover:bg-zinc-100"
+                          >
                             <StarRating value={avg} count={cnt} showNumber={cnt > 0} />
-                          </div>
+                          </button>
                           <p className="mt-3 flex-1 text-sm text-zinc-600 line-clamp-3">
                             {ngo.description}
                           </p>

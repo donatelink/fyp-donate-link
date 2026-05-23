@@ -19,7 +19,7 @@ export default function AuthLayout({
       </Head>
       <div className="flex min-h-screen flex-col bg-white md:flex-row">
         {/* Image side */}
-        <div className={`relative hidden overflow-hidden rounded-r-[2.5rem] bg-gradient-to-br md:block md:w-1/2 ${imageGradient}`}>
+        <div className={`relative hidden overflow-hidden rounded-[2.5rem] bg-gradient-to-br md:block md:w-1/2 ${imageGradient}`}>
           {imageUrl && (
             <img
               src={imageUrl}

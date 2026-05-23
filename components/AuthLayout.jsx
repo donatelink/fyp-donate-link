@@ -43,8 +43,8 @@ export default function AuthLayout({
         </div>
 
         {/* Form side */}
-        <div className="flex min-h-screen w-full flex-1 flex-col items-center overflow-y-auto bg-white p-6 sm:p-10 lg:p-16">
-          <div className="flex w-full max-w-md flex-1 flex-col">{children}</div>
+        <div className="flex min-h-screen w-full flex-1 flex-col overflow-y-auto bg-white px-6 py-8 sm:px-10 sm:py-10 lg:px-16 lg:py-12">
+          {children}
         </div>
       </div>
     </>

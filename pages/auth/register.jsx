@@ -222,59 +222,61 @@ export default function Register() {
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="regNumber" className="block text-sm font-semibold text-zinc-900">
-                      Registration / License Number
-                    </label>
-                    <input
-                      id="regNumber"
-                      type="text"
-                      required
-                      value={form.regNumber}
-                      onChange={(e) => update("regNumber", e.target.value)}
-                      className={pillInput}
-                      placeholder="Official NGO registration no."
-                    />
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="regNumber" className="block text-sm font-semibold text-zinc-900">
+                        Registration / License Number
+                      </label>
+                      <input
+                        id="regNumber"
+                        type="text"
+                        required
+                        value={form.regNumber}
+                        onChange={(e) => update("regNumber", e.target.value)}
+                        className={pillInput}
+                        placeholder="Official NGO registration no."
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="contactPerson" className="block text-sm font-semibold text-zinc-900">
+                        Contact Person
+                      </label>
+                      <input
+                        id="contactPerson"
+                        type="text"
+                        required
+                        value={form.contactPerson}
+                        onChange={(e) => update("contactPerson", e.target.value)}
+                        className={pillInput}
+                        placeholder="Full name of representative"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label htmlFor="contactPerson" className="block text-sm font-semibold text-zinc-900">
-                      Contact Person
-                    </label>
-                    <input
-                      id="contactPerson"
-                      type="text"
-                      required
-                      value={form.contactPerson}
-                      onChange={(e) => update("contactPerson", e.target.value)}
-                      className={pillInput}
-                      placeholder="Full name of representative"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-semibold text-zinc-900">
-                      Phone Number
-                    </label>
-                    <PhoneInput
-                      id="phone"
-                      required
-                      value={form.phone}
-                      onChange={(v) => update("phone", v)}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="country" className="block text-sm font-semibold text-zinc-900">
-                      Country
-                    </label>
-                    <CountrySelect
-                      id="country"
-                      required
-                      value={form.country}
-                      onChange={(v) => update("country", v)}
-                      className="rounded-full px-5 py-3"
-                    />
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="phone" className="block text-sm font-semibold text-zinc-900">
+                        Phone Number
+                      </label>
+                      <PhoneInput
+                        id="phone"
+                        required
+                        value={form.phone}
+                        onChange={(v) => update("phone", v)}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="country" className="block text-sm font-semibold text-zinc-900">
+                        Country
+                      </label>
+                      <CountrySelect
+                        id="country"
+                        required
+                        value={form.country}
+                        onChange={(v) => update("country", v)}
+                        className="rounded-full px-5 py-3"
+                      />
+                    </div>
                   </div>
 
                   <div>

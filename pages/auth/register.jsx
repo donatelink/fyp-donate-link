@@ -177,27 +177,21 @@ export default function Register() {
             )}
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-zinc-900">I am a...</label>
-                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  {ROLES.map((r) => (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => update("role", r.value)}
-                      className={`rounded-2xl border px-3 py-2.5 text-left text-xs transition ${
-                        form.role === r.value
-                          ? "border-emerald-600 bg-emerald-600 text-white"
-                          : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400"
-                      }`}
-                    >
-                      <div className="font-semibold">{r.label}</div>
-                      <div className={form.role === r.value ? "text-white/80" : "text-zinc-500"}>
-                        {r.desc}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <div className="inline-flex w-full rounded-full bg-zinc-100 p-1">
+                {ROLES.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => update("role", r.value)}
+                    className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      form.role === r.value
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "text-zinc-600 hover:text-zinc-900"
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
               </div>
 
               {isNgo ? (

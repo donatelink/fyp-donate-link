@@ -17,9 +17,9 @@ export default function AuthLayout({
       <Head>
         <title>{title} · DonateLink</title>
       </Head>
-      <div className="flex min-h-screen flex-col md:flex-row">
+      <div className="flex min-h-screen flex-col bg-white md:flex-row">
         {/* Image side */}
-        <div className={`relative hidden md:block md:w-1/2 bg-gradient-to-br ${imageGradient}`}>
+        <div className={`relative hidden overflow-hidden rounded-r-[2.5rem] bg-gradient-to-br md:block md:w-1/2 ${imageGradient}`}>
           {imageUrl && (
             <img
               src={imageUrl}

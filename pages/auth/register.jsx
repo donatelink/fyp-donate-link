@@ -27,7 +27,8 @@ function destForRole(role) {
 export default function Register() {
   const router = useRouter();
   const [form, setForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     role: "donor",
@@ -97,11 +98,12 @@ export default function Register() {
       return;
     }
 
+    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
-        data: { name: form.name, role: form.role },
+        data: { name: fullName, role: form.role },
       },
     });
 
@@ -320,19 +322,35 @@ export default function Register() {
                 </>
               ) : (
                 <>
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-zinc-900">
-                      Full Name
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      required
-                      value={form.name}
-                      onChange={(e) => update("name", e.target.value)}
-                      className={pillInput}
-                      placeholder="Your name"
-                    />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="firstName" className="block text-sm font-semibold text-zinc-900">
+                        First Name
+                      </label>
+                      <input
+                        id="firstName"
+                        type="text"
+                        required
+                        value={form.firstName}
+                        onChange={(e) => update("firstName", e.target.value)}
+                        className={pillInput}
+                        placeholder="John"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm font-semibold text-zinc-900">
+                        Last Name
+                      </label>
+                      <input
+                        id="lastName"
+                        type="text"
+                        required
+                        value={form.lastName}
+                        onChange={(e) => update("lastName", e.target.value)}
+                        className={pillInput}
+                        placeholder="Doe"
+                      />
+                    </div>
                   </div>
 
                   <div>

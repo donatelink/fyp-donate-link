@@ -44,7 +44,7 @@ export default function AuthLayout({
 
         {/* Form side */}
         <div className="flex min-h-screen w-full flex-1 flex-col overflow-y-auto bg-white px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-12">
-          <div className="w-full max-w-xl">{children}</div>
+          <div className="mx-auto w-full max-w-xl">{children}</div>
         </div>
       </div>
     </>

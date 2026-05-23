@@ -84,7 +84,7 @@ export default function AcceptInvite() {
 
         {status === "invalid" && (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Link expired</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Link expired</h1>
             <p className="mt-3 text-sm text-zinc-600">
               This invite link is no longer valid. Please ask the DonateLink admin to re-send your invitation.
             </p>
@@ -99,7 +99,7 @@ export default function AcceptInvite() {
 
         {status === "done" && (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Account activated 🎉</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Account activated 🎉</h1>
             <p className="mt-3 text-sm text-zinc-600">
               Your NGO account is ready. Taking you to your dashboard…
             </p>
@@ -108,7 +108,7 @@ export default function AcceptInvite() {
 
         {status === "ready" && (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Set your password</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Set your password</h1>
             <p className="mt-3 text-sm text-zinc-600">
               Your NGO application was approved. Create a password to access your dashboard.
             </p>

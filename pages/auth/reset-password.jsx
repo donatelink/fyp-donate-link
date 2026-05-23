@@ -85,7 +85,7 @@ export default function ResetPassword() {
 
         {status === "invalid" && (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Link expired</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Link expired</h1>
             <p className="mt-3 text-sm text-zinc-600">
               This reset link is no longer valid. Reset links expire after a short time.
             </p>
@@ -100,7 +100,7 @@ export default function ResetPassword() {
 
         {status === "done" && (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Password updated</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Password updated</h1>
             <p className="mt-3 text-sm text-zinc-600">
               Your password has been reset. Redirecting you to sign in…
             </p>
@@ -109,7 +109,7 @@ export default function ResetPassword() {
 
         {status === "ready" && (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Reset Password</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Reset Password</h1>
             <p className="mt-3 text-sm text-zinc-600">
               Your new password must be different from your previous passwords.
             </p>

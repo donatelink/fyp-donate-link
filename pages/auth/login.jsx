@@ -82,7 +82,7 @@ export default function Login() {
       </Link>
 
       <div className="mt-8">
-        <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Log in</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Log in</h1>
         <p className="mt-3 text-sm text-zinc-600">
           Don't have an account?{" "}
           <Link href="/auth/register" className="font-bold text-emerald-700 underline underline-offset-4 hover:text-emerald-800">
@@ -96,7 +96,7 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-semibold text-zinc-900">
               Email Address

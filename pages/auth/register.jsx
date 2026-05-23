@@ -145,7 +145,7 @@ export default function Register() {
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl">
               ✅
             </div>
-            <h1 className="mt-5 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
+            <h1 className="mt-5 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
               Application submitted
             </h1>
             <p className="mt-3 text-sm text-zinc-600">
@@ -162,7 +162,7 @@ export default function Register() {
           </div>
         ) : (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Create an Account</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Create an Account</h1>
             <p className="mt-3 text-sm text-zinc-600">
               Already have an account?{" "}
               <Link href="/auth/login" className="font-bold text-emerald-700 underline underline-offset-4 hover:text-emerald-800">
@@ -176,7 +176,7 @@ export default function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-zinc-900">I am a...</label>
                 <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -222,7 +222,7 @@ export default function Register() {
                     />
                   </div>
 
-                  <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label htmlFor="regNumber" className="block text-sm font-semibold text-zinc-900">
                         Registration / License Number
@@ -253,7 +253,7 @@ export default function Register() {
                     </div>
                   </div>
 
-                  <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label htmlFor="phone" className="block text-sm font-semibold text-zinc-900">
                         Phone Number

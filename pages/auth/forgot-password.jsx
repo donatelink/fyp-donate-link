@@ -51,7 +51,7 @@ export default function ForgotPassword() {
       <div className="mt-8">
         {sent ? (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Check your email</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Check your email</h1>
             <p className="mt-3 text-sm text-zinc-600">
               We sent a password reset link to{" "}
               <span className="font-semibold text-zinc-900">{email}</span>.
@@ -79,7 +79,7 @@ export default function ForgotPassword() {
           </>
         ) : (
           <>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Forgot Password</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Forgot Password</h1>
             <p className="mt-3 text-sm text-zinc-600">
               We'll send a verification link to your email address.
             </p>

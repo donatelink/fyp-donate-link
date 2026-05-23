@@ -119,7 +119,7 @@ export default function AcceptInvite() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5 animate-stagger">
               <div>
                 <label htmlFor="password" className="block text-sm font-semibold text-zinc-900">
                   Password

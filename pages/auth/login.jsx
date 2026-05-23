@@ -7,7 +7,7 @@ import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
 const pillInput =
-  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
+  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black transition focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
 function destForRole(role) {
   if (role === "admin") return "/admin/dashboard";
@@ -96,7 +96,7 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4 animate-stagger">
           <div>
             <label htmlFor="email" className="block text-sm font-semibold text-zinc-900">
               Email Address
@@ -137,7 +137,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:enabled:bg-emerald-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Log in"}
           </button>

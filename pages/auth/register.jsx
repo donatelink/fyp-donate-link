@@ -15,7 +15,7 @@ const ROLES = [
 ];
 
 const pillInput =
-  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
+  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black transition focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
 function destForRole(role) {
   if (role === "admin") return "/admin/dashboard";
@@ -178,16 +178,16 @@ export default function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4 animate-stagger">
               <div className="inline-flex w-full rounded-full bg-zinc-100 p-1">
                 {ROLES.map((r) => (
                   <button
                     key={r.value}
                     type="button"
                     onClick={() => update("role", r.value)}
-                    className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
                       form.role === r.value
-                        ? "bg-emerald-600 text-white shadow-sm"
+                        ? "bg-emerald-600 text-white shadow-sm scale-[1.02]"
                         : "text-zinc-600 hover:text-zinc-900"
                     }`}
                   >
@@ -388,7 +388,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-full bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:enabled:bg-emerald-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading
                   ? isNgo

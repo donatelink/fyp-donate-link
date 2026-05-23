@@ -4,7 +4,7 @@ import AuthLayout from "@/components/AuthLayout";
 import supabase from "@/utils/supabase";
 
 const pillInput =
-  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
+  "mt-1 w-full rounded-full border border-zinc-300 px-5 py-3 text-sm text-black transition focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -90,7 +90,7 @@ export default function ForgotPassword() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5 animate-stagger">
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-zinc-900">
                   Email Address

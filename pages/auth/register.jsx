@@ -12,16 +12,6 @@ const ROLES = [
   { value: "admin", label: "Admin", desc: "Manage donation lifecycle" },
 ];
 
-const NGO_CATEGORIES = [
-  "Education",
-  "Health",
-  "Relief & Emergency",
-  "Food & Water",
-  "Orphan Care",
-  "Environment",
-  "Other",
-];
-
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
@@ -38,7 +28,6 @@ export default function Register() {
     phone: "",
     country: "",
     website: "",
-    category: "Education",
     description: "",
   });
   const [loading, setLoading] = useState(false);
@@ -68,7 +57,7 @@ export default function Register() {
         email: form.email,
         country: form.country,
         website: form.website || null,
-        category: form.category,
+        category: "General",
         description: form.description,
       });
 
@@ -259,24 +248,6 @@ export default function Register() {
                           className={inputClass}
                           placeholder="Country of operation"
                         />
-                      </div>
-
-                      <div>
-                        <label htmlFor="category" className="block text-sm font-medium text-zinc-700">
-                          Category
-                        </label>
-                        <select
-                          id="category"
-                          value={form.category}
-                          onChange={(e) => update("category", e.target.value)}
-                          className={inputClass}
-                        >
-                          {NGO_CATEGORIES.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
                       </div>
 
                       <div>

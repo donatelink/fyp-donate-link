@@ -6,16 +6,6 @@ import Avatar from "@/components/Avatar";
 import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
-const NGO_CATEGORIES = [
-  "Education",
-  "Health",
-  "Relief & Emergency",
-  "Food & Water",
-  "Orphan Care",
-  "Environment",
-  "Other",
-];
-
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200";
 
@@ -26,7 +16,6 @@ export default function NgoSettings() {
   const [form, setForm] = useState({
     org_name: "",
     description: "",
-    category: "Education",
     country: "",
     website: "",
     contact_person: "",
@@ -66,7 +55,6 @@ export default function NgoSettings() {
         setForm({
           org_name: ngoRow.org_name || "",
           description: ngoRow.description || "",
-          category: ngoRow.category || "Education",
           country: ngoRow.country || "",
           website: ngoRow.website || "",
           contact_person: ngoRow.contact_person || "",
@@ -118,7 +106,6 @@ export default function NgoSettings() {
       .update({
         org_name: form.org_name.trim(),
         description: form.description.trim(),
-        category: form.category,
         country: form.country.trim(),
         website: form.website.trim() || null,
         contact_person: form.contact_person.trim(),
@@ -278,38 +265,18 @@ export default function NgoSettings() {
                   />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="category" className="block text-sm font-medium text-zinc-700">
-                      Category
-                    </label>
-                    <select
-                      id="category"
-                      value={form.category}
-                      onChange={(e) => update("category", e.target.value)}
-                      className={inputClass}
-                    >
-                      {NGO_CATEGORIES.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-zinc-700">
-                      Country
-                    </label>
-                    <input
-                      id="country"
-                      type="text"
-                      required
-                      value={form.country}
-                      onChange={(e) => update("country", e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-zinc-700">
+                    Country
+                  </label>
+                  <input
+                    id="country"
+                    type="text"
+                    required
+                    value={form.country}
+                    onChange={(e) => update("country", e.target.value)}
+                    className={inputClass}
+                  />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">

@@ -203,7 +203,7 @@ export default function DonorDashboard() {
           onClose={() => setReviewsNgo(null)}
         />
 
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 animate-page-in">
           <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">Your Impact</h1>
           <p className="mt-1 text-sm text-zinc-600">Donate to a verified NGO and track it on-chain.</p>
 
@@ -243,7 +243,7 @@ export default function DonorDashboard() {
                       return (
                         <div
                           key={ngo.id}
-                          className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4"
+                          className="card-hover flex flex-col rounded-2xl border border-zinc-200 bg-white p-4"
                         >
                           <div className="flex items-center gap-3">
                             <Avatar src={ngo.logo_url} name={ngo.org_name} size="md" />

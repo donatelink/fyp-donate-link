@@ -264,9 +264,9 @@ export default function AdminDashboard() {
                 <button
                   key={m.id}
                   onClick={() => setView(m.id)}
-                  className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                     active
-                      ? "bg-emerald-50 text-emerald-700"
+                      ? "bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-100"
                       : "text-zinc-600 hover:bg-zinc-100"
                   }`}
                 >
@@ -305,7 +305,7 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 animate-page-in">
           <div className="mx-auto max-w-6xl">
             <div className="flex items-center gap-2">
               <span className="text-2xl">{activeMenu?.icon}</span>

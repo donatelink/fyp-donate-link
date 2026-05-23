@@ -1,7 +1,7 @@
-import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import AuthLayout from "@/components/AuthLayout";
 import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
@@ -14,16 +14,12 @@ export default function ResetPassword() {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    // Supabase client auto-parses the recovery token from the URL fragment
-    // and fires PASSWORD_RECOVERY once the session is established.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setStatus("ready");
       }
     });
 
-    // Fallback: if Supabase already established the session before this listener
-    // attached (e.g. fast network), check for an existing session.
     const t = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
       setStatus((prev) => {
@@ -61,109 +57,112 @@ export default function ResetPassword() {
     }
 
     setStatus("done");
-    // sign the user out so they re-authenticate with the new password
     await supabase.auth.signOut();
     setTimeout(() => router.push("/auth/login"), 1500);
   }
 
   return (
-    <>
-      <Head>
-        <title>Reset Password · DonateLink</title>
-      </Head>
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 py-12">
-        <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center justify-center gap-2 text-xl font-bold text-zinc-900">
-            <span className="text-2xl">🌍</span>
-            DonateLink
-          </Link>
+    <AuthLayout
+      title="Reset Password"
+      imageUrl="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&h=1200&fit=crop&q=80&auto=format"
+      imageGradient="from-sky-900 via-blue-700 to-indigo-600"
+      outerGradient="from-sky-100 via-white to-indigo-50"
+      tagline={{ eyebrow: "Fresh start", line: "A new password and you're back on track." }}
+    >
+      <Link
+        href="/auth/login"
+        aria-label="Back to sign in"
+        className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-700 hover:bg-zinc-100"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+      </Link>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-            {status === "checking" && (
-              <div className="py-8 text-center text-sm text-zinc-500">
-                Verifying reset link…
+      <div className="mt-8">
+        {status === "checking" && (
+          <div className="py-8 text-center text-sm text-zinc-500">Verifying reset link…</div>
+        )}
+
+        {status === "invalid" && (
+          <>
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Link expired</h1>
+            <p className="mt-3 text-sm text-zinc-600">
+              This reset link is no longer valid. Reset links expire after a short time.
+            </p>
+            <Link
+              href="/auth/forgot-password"
+              className="mt-8 inline-block w-full rounded-full bg-zinc-900 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-zinc-800"
+            >
+              Request a new link
+            </Link>
+          </>
+        )}
+
+        {status === "done" && (
+          <>
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Password updated</h1>
+            <p className="mt-3 text-sm text-zinc-600">
+              Your password has been reset. Redirecting you to sign in…
+            </p>
+          </>
+        )}
+
+        {status === "ready" && (
+          <>
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Reset Password</h1>
+            <p className="mt-3 text-sm text-zinc-600">
+              Your new password must be different from your previous passwords.
+            </p>
+
+            {errorMsg && (
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {errorMsg}
               </div>
             )}
 
-            {status === "invalid" && (
-              <>
-                <h1 className="text-2xl font-bold text-zinc-900">Link expired or invalid</h1>
-                <p className="mt-2 text-sm text-zinc-600">
-                  This reset link is no longer valid. Reset links expire after a short time.
-                </p>
-                <Link
-                  href="/auth/forgot-password"
-                  className="mt-6 block w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-700"
-                >
-                  Request a new link
-                </Link>
-              </>
-            )}
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-zinc-900">
+                  New Password
+                </label>
+                <PasswordInput
+                  id="password"
+                  variant="pill"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="New Password"
+                />
+              </div>
 
-            {status === "done" && (
-              <>
-                <h1 className="text-2xl font-bold text-zinc-900">Password updated</h1>
-                <p className="mt-2 text-sm text-zinc-600">
-                  Your password has been reset. Redirecting you to sign in…
-                </p>
-              </>
-            )}
+              <div>
+                <label htmlFor="confirm" className="block text-sm font-semibold text-zinc-900">
+                  Confirm Password
+                </label>
+                <PasswordInput
+                  id="confirm"
+                  variant="pill"
+                  required
+                  minLength={8}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Confirm Password"
+                />
+              </div>
 
-            {status === "ready" && (
-              <>
-                <h1 className="text-2xl font-bold text-zinc-900">Set a new password</h1>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Pick a strong password you'll remember.
-                </p>
-
-                {errorMsg && (
-                  <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {errorMsg}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
-                      New password
-                    </label>
-                    <PasswordInput
-                      id="password"
-                      required
-                      minLength={8}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min. 8 characters"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirm" className="block text-sm font-medium text-zinc-700">
-                      Confirm password
-                    </label>
-                    <PasswordInput
-                      id="confirm"
-                      required
-                      minLength={8}
-                      value={confirm}
-                      onChange={(e) => setConfirm(e.target.value)}
-                      placeholder="Re-enter password"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loading ? "Updating..." : "Update Password"}
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Updating..." : "Reset Password"}
+              </button>
+            </form>
+          </>
+        )}
       </div>
-    </>
+    </AuthLayout>
   );
 }

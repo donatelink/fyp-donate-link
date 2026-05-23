@@ -1,7 +1,7 @@
-import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import AuthLayout from "@/components/AuthLayout";
 import PasswordInput from "@/components/PasswordInput";
 import supabase from "@/utils/supabase";
 
@@ -14,15 +14,12 @@ export default function AcceptInvite() {
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    // The Supabase client auto-parses the invite token from the URL and
-    // establishes a session, firing SIGNED_IN once it's ready.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") setStatus("ready");
     });
 
-    // Fallback in case the session was established before this listener attached.
     const t = setTimeout(async () => {
       const { data } = await supabase.auth.getSession();
       setStatus((prev) => {
@@ -64,104 +61,107 @@ export default function AcceptInvite() {
   }
 
   return (
-    <>
-      <Head>
-        <title>Activate NGO Account · DonateLink</title>
-      </Head>
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 py-12">
-        <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex items-center justify-center gap-2 text-xl font-bold text-zinc-900">
-            <span className="text-2xl">🌍</span>
-            DonateLink
-          </Link>
+    <AuthLayout
+      title="Activate NGO Account"
+      imageUrl="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=900&h=1200&fit=crop&q=80&auto=format"
+      imageGradient="from-emerald-900 via-teal-700 to-cyan-600"
+      outerGradient="from-emerald-50 via-white to-teal-50"
+      tagline={{ eyebrow: "You're approved", line: "Set your password and start receiving donations." }}
+    >
+      <Link
+        href="/"
+        aria-label="Back to home"
+        className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-700 hover:bg-zinc-100"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+      </Link>
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-            {status === "checking" && (
-              <div className="py-8 text-center text-sm text-zinc-500">
-                Verifying your invite…
+      <div className="mt-8">
+        {status === "checking" && (
+          <div className="py-8 text-center text-sm text-zinc-500">Verifying your invite…</div>
+        )}
+
+        {status === "invalid" && (
+          <>
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Link expired</h1>
+            <p className="mt-3 text-sm text-zinc-600">
+              This invite link is no longer valid. Please ask the DonateLink admin to re-send your invitation.
+            </p>
+            <Link
+              href="/"
+              className="mt-8 inline-block w-full rounded-full bg-zinc-900 px-6 py-3.5 text-center text-sm font-semibold text-white hover:bg-zinc-800"
+            >
+              Back to home
+            </Link>
+          </>
+        )}
+
+        {status === "done" && (
+          <>
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Account activated 🎉</h1>
+            <p className="mt-3 text-sm text-zinc-600">
+              Your NGO account is ready. Taking you to your dashboard…
+            </p>
+          </>
+        )}
+
+        {status === "ready" && (
+          <>
+            <h1 className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">Set your password</h1>
+            <p className="mt-3 text-sm text-zinc-600">
+              Your NGO application was approved. Create a password to access your dashboard.
+            </p>
+
+            {errorMsg && (
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {errorMsg}
               </div>
             )}
 
-            {status === "invalid" && (
-              <>
-                <h1 className="text-2xl font-bold text-zinc-900">Link expired or invalid</h1>
-                <p className="mt-2 text-sm text-zinc-600">
-                  This invite link is no longer valid. Please ask the DonateLink admin to
-                  re-send your invitation.
-                </p>
-                <Link
-                  href="/"
-                  className="mt-6 block w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-700"
-                >
-                  Back to home
-                </Link>
-              </>
-            )}
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-zinc-900">
+                  Password
+                </label>
+                <PasswordInput
+                  id="password"
+                  variant="pill"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 8 characters"
+                />
+              </div>
 
-            {status === "done" && (
-              <>
-                <h1 className="text-2xl font-bold text-zinc-900">Account activated 🎉</h1>
-                <p className="mt-2 text-sm text-zinc-600">
-                  Your NGO account is ready. Taking you to your dashboard…
-                </p>
-              </>
-            )}
+              <div>
+                <label htmlFor="confirm" className="block text-sm font-semibold text-zinc-900">
+                  Confirm password
+                </label>
+                <PasswordInput
+                  id="confirm"
+                  variant="pill"
+                  required
+                  minLength={8}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Re-enter password"
+                />
+              </div>
 
-            {status === "ready" && (
-              <>
-                <h1 className="text-2xl font-bold text-zinc-900">Set your password</h1>
-                <p className="mt-1 text-sm text-zinc-600">
-                  Your NGO application was approved. Create a password to access your dashboard.
-                </p>
-
-                {errorMsg && (
-                  <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    {errorMsg}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
-                      Password
-                    </label>
-                    <PasswordInput
-                      id="password"
-                      required
-                      minLength={8}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min. 8 characters"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirm" className="block text-sm font-medium text-zinc-700">
-                      Confirm password
-                    </label>
-                    <PasswordInput
-                      id="confirm"
-                      required
-                      minLength={8}
-                      value={confirm}
-                      onChange={(e) => setConfirm(e.target.value)}
-                      placeholder="Re-enter password"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loading ? "Activating..." : "Activate Account"}
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-zinc-900 px-6 py-3.5 text-sm font-semibold text-white hover:enabled:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Activating..." : "Activate Account"}
+              </button>
+            </form>
+          </>
+        )}
       </div>
-    </>
+    </AuthLayout>
   );
 }

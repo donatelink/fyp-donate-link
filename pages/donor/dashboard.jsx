@@ -4,6 +4,8 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
 import DonationModal from "@/components/DonationModal";
+import RatingModal from "@/components/RatingModal";
+import StarRating from "@/components/StarRating";
 import supabase from "@/utils/supabase";
 
 const STAGES = ["Pending", "Confirmed", "Allocated", "Transferred", "Completed"];
@@ -39,7 +41,10 @@ export default function DonorDashboard() {
   const [loading, setLoading] = useState(true);
   const [ngos, setNgos] = useState([]);
   const [donations, setDonations] = useState([]);
+  const [ratings, setRatings] = useState([]);
+  const [userId, setUserId] = useState(null);
   const [modalNgo, setModalNgo] = useState(null);
+  const [ratingNgo, setRatingNgo] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
@@ -52,25 +57,33 @@ export default function DonorDashboard() {
         router.replace("/auth/login");
         return;
       }
-      const [ngoRes, donRes] = await Promise.all([
+      const [ngoRes, donRes, ratingRes] = await Promise.all([
         supabase.from("ngos").select("*").eq("status", "approved").order("org_name"),
         supabase
           .from("donations")
           .select("*")
           .eq("donor_id", session.user.id)
           .order("created_at", { ascending: false }),
+        supabase.from("ngo_ratings").select("*"),
       ]);
       if (!active) return;
       if (ngoRes.error) setErrorMsg(ngoRes.error.message);
       if (donRes.error) setErrorMsg(donRes.error.message);
+      setUserId(session.user.id);
       setNgos(ngoRes.data || []);
       setDonations(donRes.data || []);
+      setRatings(ratingRes.data || []);
       setLoading(false);
     })();
     return () => {
       active = false;
     };
   }, [router]);
+
+  async function reloadRatings() {
+    const { data } = await supabase.from("ngo_ratings").select("*");
+    setRatings(data || []);
+  }
 
   async function reloadDonations() {
     const {
@@ -92,6 +105,44 @@ export default function DonorDashboard() {
 
   const total = donations.reduce((sum, d) => sum + Number(d.amount), 0);
   const completed = donations.filter((d) => d.stage === 5).length;
+
+  // Build per-NGO rating stats and user's own rating
+  const statsByNgo = {};
+  for (const r of ratings) {
+    if (!statsByNgo[r.ngo_id]) statsByNgo[r.ngo_id] = { sum: 0, count: 0, mine: null };
+    statsByNgo[r.ngo_id].sum += r.stars;
+    statsByNgo[r.ngo_id].count += 1;
+    if (r.user_id === userId) statsByNgo[r.ngo_id].mine = r;
+  }
+  function avgFor(ngoId) {
+    const s = statsByNgo[ngoId];
+    return s ? s.sum / s.count : 0;
+  }
+  function countFor(ngoId) {
+    return statsByNgo[ngoId]?.count || 0;
+  }
+  function myFor(ngoId) {
+    return statsByNgo[ngoId]?.mine || null;
+  }
+
+  // Top 3 by avg, min 3 reviews
+  const topRatedIds = new Set(
+    [...ngos]
+      .filter((n) => countFor(n.id) >= 3)
+      .sort((a, b) => avgFor(b.id) - avgFor(a.id))
+      .slice(0, 3)
+      .map((n) => n.id)
+  );
+
+  // Eligibility: donor must have at least one donation to that NGO
+  const donatedNgoIds = new Set(donations.map((d) => d.ngo_id));
+
+  // Sort NGOs by avg rating desc, ties → alphabetical
+  const sortedNgos = [...ngos].sort((a, b) => {
+    const diff = avgFor(b.id) - avgFor(a.id);
+    if (diff !== 0) return diff;
+    return (a.org_name || "").localeCompare(b.org_name || "");
+  });
 
   return (
     <>
@@ -135,6 +186,15 @@ export default function DonorDashboard() {
           onDonated={reloadDonations}
         />
 
+        <RatingModal
+          open={!!ratingNgo}
+          ngo={ratingNgo}
+          existing={ratingNgo ? myFor(ratingNgo.id) : null}
+          role="donor"
+          onClose={() => setRatingNgo(null)}
+          onSaved={reloadRatings}
+        />
+
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
           <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">Your Impact</h1>
           <p className="mt-1 text-sm text-zinc-600">Donate to a verified NGO and track it on-chain.</p>
@@ -166,32 +226,59 @@ export default function DonorDashboard() {
                   </div>
                 ) : (
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {ngos.map((ngo) => (
-                      <div
-                        key={ngo.id}
-                        className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar src={ngo.logo_url} name={ngo.org_name} size="md" />
-                          <div className="min-w-0">
-                            <h3 className="truncate font-semibold text-zinc-900">{ngo.org_name}</h3>
-                            <span className="mt-0.5 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-600">
-                              {ngo.category}
-                            </span>
+                    {sortedNgos.map((ngo) => {
+                      const avg = avgFor(ngo.id);
+                      const cnt = countFor(ngo.id);
+                      const mine = myFor(ngo.id);
+                      const eligible = donatedNgoIds.has(ngo.id);
+                      const topRated = topRatedIds.has(ngo.id);
+                      return (
+                        <div
+                          key={ngo.id}
+                          className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar src={ngo.logo_url} name={ngo.org_name} size="md" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <h3 className="truncate font-semibold text-zinc-900">{ngo.org_name}</h3>
+                                {topRated && (
+                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
+                                    ★ Top Rated
+                                  </span>
+                                )}
+                              </div>
+                              <span className="mt-0.5 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-600">
+                                {ngo.category}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <StarRating value={avg} count={cnt} showNumber={cnt > 0} />
+                          </div>
+                          <p className="mt-3 flex-1 text-sm text-zinc-600 line-clamp-3">
+                            {ngo.description}
+                          </p>
+                          <p className="mt-2 text-xs text-zinc-400">{ngo.country}</p>
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              onClick={() => setModalNgo(ngo)}
+                              className="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                            >
+                              Donate
+                            </button>
+                            <button
+                              onClick={() => setRatingNgo(ngo)}
+                              disabled={!eligible}
+                              title={eligible ? "" : "Donate first to leave a rating"}
+                              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 hover:enabled:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {mine ? "Edit ★" : "Rate"}
+                            </button>
                           </div>
                         </div>
-                        <p className="mt-3 flex-1 text-sm text-zinc-600 line-clamp-3">
-                          {ngo.description}
-                        </p>
-                        <p className="mt-2 text-xs text-zinc-400">{ngo.country}</p>
-                        <button
-                          onClick={() => setModalNgo(ngo)}
-                          className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                        >
-                          Donate
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -4,12 +4,19 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Avatar from "@/components/Avatar";
 import DonationModal from "@/components/DonationModal";
+import StarRating from "@/components/StarRating";
 import supabase from "@/utils/supabase";
+
+function fmtDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString();
+}
 
 export default function NgoPage() {
   const router = useRouter();
   const { slug } = router.query;
   const [ngo, setNgo] = useState(null);
+  const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -31,12 +38,26 @@ export default function NgoPage() {
       if (!active) return;
       setNgo(ngoRes.data || null);
       setSignedIn(!!sessionRes.data.session);
+
+      if (ngoRes.data?.id) {
+        const { data: rData } = await supabase
+          .from("ngo_ratings")
+          .select("*")
+          .eq("ngo_id", ngoRes.data.id)
+          .order("created_at", { ascending: false });
+        if (active) setRatings(rData || []);
+      }
       setLoading(false);
     })();
     return () => {
       active = false;
     };
   }, [slug]);
+
+  const ratingCount = ratings.length;
+  const ratingAvg = ratingCount
+    ? ratings.reduce((s, r) => s + r.stars, 0) / ratingCount
+    : 0;
 
   function handleDonate() {
     if (signedIn) setModalOpen(true);
@@ -100,6 +121,9 @@ export default function NgoPage() {
                   <div>
                     <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">{ngo.org_name}</h1>
                     <p className="mt-1 text-sm text-zinc-500">{ngo.country}</p>
+                    <div className="mt-1">
+                      <StarRating value={ratingAvg} size="md" count={ratingCount} showNumber={ratingCount > 0} />
+                    </div>
                   </div>
                 </div>
 
@@ -142,6 +166,35 @@ export default function NgoPage() {
               <p className="mt-4 text-center text-xs text-zinc-400">
                 Every donation to this NGO is tracked transparently through 5 stages.
               </p>
+
+              {ratings.length > 0 && (
+                <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
+                  <h2 className="text-base font-semibold text-zinc-900">
+                    Reviews ({ratings.length})
+                  </h2>
+                  <ul className="mt-4 divide-y divide-zinc-100">
+                    {ratings.map((r) => (
+                      <li key={r.id} className="py-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="font-semibold text-zinc-900">
+                            {r.reviewer_name || "Anonymous"}
+                            {r.reviewer_role && (
+                              <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-zinc-600">
+                                {r.reviewer_role}
+                              </span>
+                            )}
+                          </div>
+                          <StarRating value={r.stars} />
+                        </div>
+                        {r.review && (
+                          <p className="mt-2 text-sm text-zinc-700">{r.review}</p>
+                        )}
+                        <p className="mt-1 text-xs text-zinc-400">{fmtDate(r.created_at)}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </>
           )}
         </main>

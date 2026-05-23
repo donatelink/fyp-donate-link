@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import Avatar from "@/components/Avatar";
 import DonationModal from "@/components/DonationModal";
 import supabase from "@/utils/supabase";
 
@@ -94,8 +95,13 @@ export default function NgoPage() {
                   </span>
                 </div>
 
-                <h1 className="mt-4 text-2xl font-bold text-zinc-900 sm:text-3xl">{ngo.org_name}</h1>
-                <p className="mt-1 text-sm text-zinc-500">{ngo.country}</p>
+                <div className="mt-4 flex items-center gap-4">
+                  <Avatar src={ngo.logo_url} name={ngo.org_name} size="xl" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">{ngo.org_name}</h1>
+                    <p className="mt-1 text-sm text-zinc-500">{ngo.country}</p>
+                  </div>
+                </div>
 
                 <p className="mt-4 text-sm leading-relaxed text-zinc-700">{ngo.description}</p>
 

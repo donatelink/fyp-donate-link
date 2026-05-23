@@ -8,6 +8,7 @@ import supabase from "@/utils/supabase";
 const ROLES = [
   { value: "donor", label: "Donor", desc: "Give to causes worldwide" },
   { value: "ngo", label: "NGO", desc: "Receive verified funds" },
+  { value: "beneficiary", label: "Beneficiary", desc: "Request help from an NGO" },
   { value: "admin", label: "Admin", desc: "Manage donation lifecycle" },
 ];
 
@@ -105,7 +106,12 @@ export default function Register() {
       return;
     }
 
-    const dest = form.role === "admin" ? "/admin/dashboard" : "/donor/dashboard";
+    const dest =
+      form.role === "admin"
+        ? "/admin/dashboard"
+        : form.role === "beneficiary"
+        ? "/beneficiary/dashboard"
+        : "/donor/dashboard";
     router.push(dest);
   }
 
@@ -154,7 +160,7 @@ export default function Register() {
                 <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700">I am a...</label>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                       {ROLES.map((r) => (
                         <button
                           key={r.value}

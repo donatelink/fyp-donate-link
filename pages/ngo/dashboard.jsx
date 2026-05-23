@@ -7,6 +7,20 @@ import supabase from "@/utils/supabase";
 
 const STAGE_LABELS = ["Pending", "Confirmed", "Allocated", "Transferred", "Completed"];
 
+const REQ_STATUS_LABEL = {
+  pending: "Pending",
+  verified: "Verified",
+  rejected: "Rejected",
+  funded: "Funded",
+};
+
+const REQ_STATUS_BADGE = {
+  pending: "bg-amber-100 text-amber-700",
+  verified: "bg-emerald-100 text-emerald-700",
+  funded: "bg-emerald-600 text-white",
+  rejected: "bg-red-100 text-red-700",
+};
+
 function fmtDate(iso) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString();
@@ -20,14 +34,21 @@ function StageBadge({ stage }) {
   );
 }
 
+const MENU = [
+  { id: "donations", label: "Donations", icon: "💸" },
+  { id: "requests", label: "Beneficiary Requests", icon: "🤝" },
+];
+
 export default function NgoDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [ngo, setNgo] = useState(null);
   const [donations, setDonations] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const [advanceDon, setAdvanceDon] = useState(null);
+  const [view, setView] = useState("donations");
 
   useEffect(() => {
     let active = true;
@@ -71,12 +92,22 @@ export default function NgoDashboard() {
       setNgo(ngoRow || null);
 
       if (ngoRow) {
-        const { data: donRows } = await supabase
-          .from("donations")
-          .select("*")
-          .eq("ngo_id", ngoRow.id)
-          .order("created_at", { ascending: false });
-        if (active) setDonations(donRows || []);
+        const [donRes, reqRes] = await Promise.all([
+          supabase
+            .from("donations")
+            .select("*")
+            .eq("ngo_id", ngoRow.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("beneficiary_requests")
+            .select("*")
+            .eq("ngo_id", ngoRow.id)
+            .order("created_at", { ascending: false }),
+        ]);
+        if (active) {
+          setDonations(donRes.data || []);
+          setRequests(reqRes.data || []);
+        }
       }
       setLoading(false);
     })();
@@ -94,6 +125,16 @@ export default function NgoDashboard() {
       .eq("ngo_id", ngo.id)
       .order("created_at", { ascending: false });
     setDonations(data || []);
+  }
+
+  async function loadRequests() {
+    if (!ngo) return;
+    const { data } = await supabase
+      .from("beneficiary_requests")
+      .select("*")
+      .eq("ngo_id", ngo.id)
+      .order("created_at", { ascending: false });
+    setRequests(data || []);
   }
 
   async function handleSignOut() {
@@ -118,157 +159,408 @@ export default function NgoDashboard() {
 
   const totalRaised = donations.reduce((sum, d) => sum + Number(d.amount), 0);
   const completed = donations.filter((d) => d.stage === 5).length;
+  const pendingReqCount = requests.filter((r) => r.status === "pending").length;
+  const verifiedRequests = requests.filter((r) => r.status === "verified");
+
+  const activeMenu = MENU.find((m) => m.id === view);
 
   return (
     <>
       <Head>
         <title>NGO Dashboard · DonateLink</title>
       </Head>
-      <div className="min-h-screen bg-zinc-50">
-        <header className="border-b border-zinc-200 bg-white">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-            <Link href="/" className="flex items-center gap-2 text-base font-bold text-zinc-900 sm:text-lg">
+
+      <StageAdvanceModal
+        open={!!advanceDon}
+        donation={advanceDon}
+        verifiedRequests={verifiedRequests}
+        onClose={() => setAdvanceDon(null)}
+        onAdvanced={() => {
+          loadDonations();
+          loadRequests();
+        }}
+      />
+
+      <div className="min-h-screen bg-zinc-50 md:flex">
+        {/* Sidebar */}
+        <aside className="border-b border-zinc-200 bg-white md:w-60 md:shrink-0 md:border-b-0 md:border-r">
+          <div className="flex items-center justify-between px-5 py-4">
+            <Link href="/" className="flex items-center gap-2 text-lg font-bold text-zinc-900">
               <span className="text-xl">🌍</span>
               DonateLink
             </Link>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 sm:px-3">
+            <button
+              onClick={handleSignOut}
+              className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:border-zinc-400 md:hidden"
+            >
+              Sign Out
+            </button>
+          </div>
+
+          <nav className="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:gap-1 md:overflow-visible">
+            {MENU.map((m) => {
+              const active = view === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setView(m.id)}
+                  className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    active ? "bg-emerald-50 text-emerald-700" : "text-zinc-600 hover:bg-zinc-100"
+                  }`}
+                >
+                  <span>{m.icon}</span>
+                  <span>{m.label}</span>
+                  {m.id === "requests" && pendingReqCount > 0 && (
+                    <span className="ml-auto rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      {pendingReqCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="hidden px-3 pb-4 md:block">
+            <button
+              onClick={handleSignOut}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-700 hover:border-zinc-400"
+            >
+              Sign Out
+            </button>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{activeMenu?.icon}</span>
+              <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">{activeMenu?.label}</h1>
+              <span className="ml-auto rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                 NGO
               </span>
-              <button
-                onClick={handleSignOut}
-                className="rounded-full border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 hover:border-zinc-400 sm:px-4 sm:text-sm"
-              >
-                Sign Out
-              </button>
             </div>
-          </div>
-        </header>
 
-        <StageAdvanceModal
-          open={!!advanceDon}
-          donation={advanceDon}
-          onClose={() => setAdvanceDon(null)}
-          onAdvanced={loadDonations}
-        />
+            {loading && <p className="mt-6 text-sm text-zinc-500">Loading your dashboard…</p>}
 
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-          {loading && <p className="text-sm text-zinc-500">Loading your dashboard…</p>}
-
-          {!loading && errorMsg && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {errorMsg}
-            </div>
-          )}
-
-          {!loading && !ngo && !errorMsg && (
-            <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center">
-              <div className="text-4xl">🗂️</div>
-              <h1 className="mt-3 text-lg font-bold text-zinc-900">No NGO profile linked</h1>
-              <p className="mt-1 text-sm text-zinc-600">
-                We couldn't find an NGO application for this account. Contact the DonateLink admin.
-              </p>
-            </div>
-          )}
-
-          {!loading && ngo && (
-            <>
-              <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">{ngo.org_name}</h1>
-              <p className="mt-1 text-sm text-zinc-600">
-                Manage donations to your NGO and keep donors updated on every stage.
-              </p>
-
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-                <StatCard label="Total Raised" value={`$${totalRaised}`} />
-                <StatCard label="Donations" value={donations.length} />
-                <StatCard label="Completed" value={completed} accent />
-                <StatCard label="In Progress" value={donations.length - completed} />
+            {!loading && errorMsg && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {errorMsg}
               </div>
+            )}
 
-              {/* Public donation link */}
-              <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
-                <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                  Your public donation link
-                </div>
-                <p className="mt-1 text-xs text-emerald-700">
-                  Share this link anywhere — donors use it to give directly to your NGO.
+            {!loading && !ngo && !errorMsg && (
+              <div className="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center">
+                <div className="text-4xl">🗂️</div>
+                <h2 className="mt-3 text-lg font-bold text-zinc-900">No NGO profile linked</h2>
+                <p className="mt-1 text-sm text-zinc-600">
+                  We couldn't find an NGO application for this account. Contact the DonateLink admin.
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <code className="break-all rounded-md bg-white px-3 py-2 text-xs text-emerald-800">
-                    {donationLink || "Link unavailable"}
-                  </code>
-                  {donationLink && (
-                    <button
-                      onClick={copyLink}
-                      className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
-                    >
-                      {copied ? "Copied!" : "Copy link"}
-                    </button>
-                  )}
-                </div>
               </div>
+            )}
 
-              {/* Donations */}
-              <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-                <div className="border-b border-zinc-200 px-4 py-3 sm:px-5 sm:py-4">
-                  <h2 className="text-base font-semibold text-zinc-900">Donations to your NGO</h2>
-                  <p className="text-xs text-zinc-500">
-                    Advance each donation through the 5 stages so donors can track their impact.
-                  </p>
-                </div>
+            {!loading && ngo && view === "donations" && (
+              <DonationsView
+                ngo={ngo}
+                donations={donations}
+                donationLink={donationLink}
+                copied={copied}
+                copyLink={copyLink}
+                onAdvance={setAdvanceDon}
+                totalRaised={totalRaised}
+                completed={completed}
+              />
+            )}
 
-                {donations.length === 0 ? (
-                  <div className="px-4 py-12 text-center text-sm text-zinc-500">
-                    No donations yet. Share your donation link to start receiving support.
-                  </div>
-                ) : (
-                  <ul className="divide-y divide-zinc-100">
-                    {donations.map((d) => (
-                      <li key={d.id} className="px-4 py-4 sm:px-5">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="font-semibold text-zinc-900">{d.donor_name}</div>
-                            <div className="mt-0.5 text-xs text-zinc-500">
-                              {d.donor_email} · {d.donation_type} · {fmtDate(d.created_at)}
-                            </div>
-                            <div className="mt-2">
-                              <StageBadge stage={d.stage} />
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-zinc-900">${d.amount}</div>
-                            {d.stage < 5 ? (
-                              <button
-                                onClick={() => setAdvanceDon(d)}
-                                className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                              >
-                                Advance → {STAGE_LABELS[d.stage]}
-                              </button>
-                            ) : (
-                              <span className="mt-2 inline-block text-xs font-semibold text-emerald-600">
-                                ✓ Completed
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {d.note && (
-                          <p className="mt-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
-                            Note to donor: {d.note}
-                          </p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </>
-          )}
+            {!loading && ngo && view === "requests" && (
+              <RequestsView ngo={ngo} requests={requests} reload={loadRequests} />
+            )}
+          </div>
         </main>
       </div>
     </>
   );
 }
 
+/* ---------- Donations view ---------- */
+function DonationsView({
+  ngo,
+  donations,
+  donationLink,
+  copied,
+  copyLink,
+  onAdvance,
+  totalRaised,
+  completed,
+}) {
+  return (
+    <>
+      <p className="mt-1 text-sm text-zinc-600">
+        Manage donations to <span className="font-semibold">{ngo.org_name}</span> and keep donors
+        updated on every stage.
+      </p>
+
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <StatCard label="Total Raised" value={`$${totalRaised}`} />
+        <StatCard label="Donations" value={donations.length} />
+        <StatCard label="Completed" value={completed} accent />
+        <StatCard label="In Progress" value={donations.length - completed} />
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+        <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          Your public donation link
+        </div>
+        <p className="mt-1 text-xs text-emerald-700">
+          Share this link anywhere — donors use it to give directly to your NGO.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <code className="break-all rounded-md bg-white px-3 py-2 text-xs text-emerald-800">
+            {donationLink || "Link unavailable"}
+          </code>
+          {donationLink && (
+            <button
+              onClick={copyLink}
+              className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+            >
+              {copied ? "Copied!" : "Copy link"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="border-b border-zinc-200 px-4 py-3 sm:px-5 sm:py-4">
+          <h2 className="text-base font-semibold text-zinc-900">Donations to your NGO</h2>
+          <p className="text-xs text-zinc-500">
+            Advance each donation through the 5 stages. At stage 4 you can link it to a verified
+            beneficiary request.
+          </p>
+        </div>
+
+        {donations.length === 0 ? (
+          <div className="px-4 py-12 text-center text-sm text-zinc-500">
+            No donations yet. Share your donation link to start receiving support.
+          </div>
+        ) : (
+          <ul className="divide-y divide-zinc-100">
+            {donations.map((d) => (
+              <li key={d.id} className="px-4 py-4 sm:px-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-zinc-900">{d.donor_name}</div>
+                    <div className="mt-0.5 text-xs text-zinc-500">
+                      {d.donor_email} · {d.donation_type} · {fmtDate(d.created_at)}
+                    </div>
+                    <div className="mt-2">
+                      <StageBadge stage={d.stage} />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-zinc-900">${d.amount}</div>
+                    {d.stage < 5 ? (
+                      <button
+                        onClick={() => onAdvance(d)}
+                        className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                      >
+                        Advance → {STAGE_LABELS[d.stage]}
+                      </button>
+                    ) : (
+                      <span className="mt-2 inline-block text-xs font-semibold text-emerald-600">
+                        ✓ Completed
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {d.note && (
+                  <p className="mt-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+                    Note to donor: {d.note}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ---------- Beneficiary Requests view ---------- */
+function RequestsView({ requests, reload }) {
+  const [actingId, setActingId] = useState(null);
+  const [rejectId, setRejectId] = useState(null);
+  const [rejectNote, setRejectNote] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  async function verify(req) {
+    setActingId(req.id);
+    setErrorMsg("");
+    const { error } = await supabase
+      .from("beneficiary_requests")
+      .update({ status: "verified", updated_at: new Date().toISOString() })
+      .eq("id", req.id);
+    if (error) setErrorMsg(error.message);
+    else await reload();
+    setActingId(null);
+  }
+
+  async function submitReject() {
+    if (!rejectId) return;
+    setActingId(rejectId);
+    setErrorMsg("");
+    const { error } = await supabase
+      .from("beneficiary_requests")
+      .update({
+        status: "rejected",
+        ngo_note: rejectNote.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", rejectId);
+    if (error) setErrorMsg(error.message);
+    else {
+      await reload();
+      setRejectId(null);
+      setRejectNote("");
+    }
+    setActingId(null);
+  }
+
+  if (requests.length === 0) {
+    return (
+      <div className="mt-6 rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
+        No beneficiary requests yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 space-y-3">
+      {errorMsg && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {errorMsg}
+        </div>
+      )}
+
+      {requests.map((r) => (
+        <div key={r.id} className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-zinc-900">{r.beneficiary_name}</h3>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    REQ_STATUS_BADGE[r.status] || "bg-zinc-100 text-zinc-700"
+                  }`}
+                >
+                  {REQ_STATUS_LABEL[r.status] || r.status}
+                </span>
+              </div>
+              <div className="mt-0.5 text-xs text-zinc-500">
+                {r.status === "pending"
+                  ? "Contact hidden until verified"
+                  : r.beneficiary_email}
+                {" · "}
+                {fmtDate(r.created_at)}
+              </div>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{r.reason}</p>
+              {r.proof_url && (
+                <a
+                  href={r.proof_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-xs font-semibold text-emerald-600 underline"
+                >
+                  📎 View attached proof
+                </a>
+              )}
+              {r.ngo_note && (
+                <p className="mt-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+                  Your note: {r.ngo_note}
+                </p>
+              )}
+            </div>
+
+            <div className="shrink-0 text-right">
+              <div className="font-bold text-zinc-900">${r.amount}</div>
+              {r.status === "pending" && (
+                <div className="mt-2 flex flex-col gap-2">
+                  <button
+                    onClick={() => verify(r)}
+                    disabled={actingId === r.id}
+                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:enabled:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {actingId === r.id ? "..." : "Verify"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRejectId(r.id);
+                      setRejectNote("");
+                    }}
+                    disabled={actingId === r.id}
+                    className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:enabled:bg-red-50 disabled:opacity-60"
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
+              {r.status === "verified" && (
+                <p className="mt-2 text-xs font-semibold text-emerald-600">
+                  Link a donation at stage 4 to fund
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {rejectId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8"
+          onClick={() => setRejectId(null)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="border-b border-zinc-200 px-6 py-4">
+              <h2 className="text-base font-semibold text-zinc-900">Reject request</h2>
+            </div>
+            <div className="space-y-3 px-6 py-5">
+              <p className="text-sm text-zinc-600">
+                Tell the beneficiary why (optional). They can re-apply next month.
+              </p>
+              <textarea
+                rows={3}
+                value={rejectNote}
+                onChange={(e) => setRejectNote(e.target.value)}
+                placeholder="Reason for rejection"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </div>
+            <div className="flex items-center justify-between border-t border-zinc-200 bg-zinc-50 px-6 py-4">
+              <button
+                onClick={() => setRejectId(null)}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-zinc-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitReject}
+                disabled={actingId === rejectId}
+                className="rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:enabled:bg-red-700 disabled:opacity-50"
+              >
+                {actingId === rejectId ? "Rejecting..." : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- shared ---------- */
 function StatCard({ label, value, accent }) {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">

@@ -19,7 +19,23 @@ const MENU = [
   { id: "donations", label: "Donations", icon: "💸" },
   { id: "ngos", label: "NGOs", icon: "🏢" },
   { id: "donors", label: "Donors", icon: "🧑" },
+  { id: "beneficiaries", label: "Beneficiaries", icon: "🤝" },
+  { id: "requests", label: "Beneficiary Requests", icon: "📥" },
 ];
+
+const REQ_STATUS_LABEL = {
+  pending: "Pending",
+  verified: "Verified",
+  rejected: "Rejected",
+  funded: "Funded",
+};
+
+const REQ_STATUS_BADGE = {
+  pending: "bg-amber-100 text-amber-700",
+  verified: "bg-emerald-100 text-emerald-700",
+  funded: "bg-emerald-600 text-white",
+  rejected: "bg-red-100 text-red-700",
+};
 
 function fmtDate(iso) {
   if (!iso) return "—";
@@ -32,6 +48,7 @@ export default function AdminDashboard() {
 
   const [ngos, setNgos] = useState([]);
   const [donations, setDonations] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,14 +63,20 @@ export default function AdminDashboard() {
   async function loadAll() {
     setLoading(true);
     setError("");
-    const [ngoRes, donRes] = await Promise.all([
+    const [ngoRes, donRes, reqRes] = await Promise.all([
       supabase.from("ngos").select("*").order("created_at", { ascending: false }),
       supabase.from("donations").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("beneficiary_requests")
+        .select("*")
+        .order("created_at", { ascending: false }),
     ]);
     if (ngoRes.error) setError(ngoRes.error.message);
     if (donRes.error) setError(donRes.error.message);
+    if (reqRes.error) setError(reqRes.error.message);
     setNgos(ngoRes.data || []);
     setDonations(donRes.data || []);
+    setRequests(reqRes.data || []);
     setLoading(false);
   }
 
@@ -147,6 +170,29 @@ export default function AdminDashboard() {
 
   const totalVolume = donations.reduce((s, d) => s + Number(d.amount), 0);
 
+  // Derived: beneficiary directory aggregated from requests
+  const beneficiaryMap = {};
+  for (const r of requests) {
+    const key = r.beneficiary_id || r.beneficiary_email || r.beneficiary_name;
+    if (!beneficiaryMap[key]) {
+      beneficiaryMap[key] = {
+        name: r.beneficiary_name,
+        email: r.beneficiary_email,
+        count: 0,
+        totalAsked: 0,
+        lastStatus: r.status,
+      };
+    }
+    beneficiaryMap[key].count += 1;
+    beneficiaryMap[key].totalAsked += Number(r.amount);
+  }
+  const beneficiaries = Object.values(beneficiaryMap).sort(
+    (a, b) => b.totalAsked - a.totalAsked
+  );
+
+  const pendingReqCount = requests.filter((r) => r.status === "pending").length;
+  const verifiedRequests = requests.filter((r) => r.status === "verified");
+
   const activeMenu = MENU.find((m) => m.id === view);
 
   return (
@@ -158,8 +204,9 @@ export default function AdminDashboard() {
       <StageAdvanceModal
         open={!!advanceDon}
         donation={advanceDon}
+        verifiedRequests={verifiedRequests}
         onClose={() => setAdvanceDon(null)}
-        onAdvanced={loadDonations}
+        onAdvanced={loadAll}
       />
 
       <div className="min-h-screen bg-zinc-50 md:flex">
@@ -196,6 +243,11 @@ export default function AdminDashboard() {
                   {m.id === "approvals" && pendingCount > 0 && (
                     <span className="ml-auto rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                       {pendingCount}
+                    </span>
+                  )}
+                  {m.id === "requests" && pendingReqCount > 0 && (
+                    <span className="ml-auto rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      {pendingReqCount}
                     </span>
                   )}
                 </button>
@@ -258,6 +310,8 @@ export default function AdminDashboard() {
                 )}
                 {view === "ngos" && <NgosView ngoStats={ngoStats} ngoLink={ngoLink} />}
                 {view === "donors" && <DonorsView donors={donors} />}
+                {view === "beneficiaries" && <BeneficiariesView beneficiaries={beneficiaries} />}
+                {view === "requests" && <RequestsView requests={requests} />}
               </div>
             )}
           </div>
@@ -587,6 +641,103 @@ function DonorsView({ donors }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+/* ---------- Beneficiaries ---------- */
+function BeneficiariesView({ beneficiaries }) {
+  if (beneficiaries.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
+        No beneficiaries yet — no requests have been submitted.
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+      <ul className="divide-y divide-zinc-100 md:hidden">
+        {beneficiaries.map((b, i) => (
+          <li key={i} className="flex items-center justify-between px-4 py-4">
+            <div className="min-w-0">
+              <div className="font-semibold text-zinc-900">{b.name}</div>
+              <div className="truncate text-xs text-zinc-500">{b.email}</div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-emerald-600">${b.totalAsked}</div>
+              <div className="text-xs text-zinc-500">{b.count} request(s)</div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden md:block">
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
+            <tr>
+              <th className="px-5 py-3">Beneficiary</th>
+              <th className="px-5 py-3">Email</th>
+              <th className="px-5 py-3">Requests</th>
+              <th className="px-5 py-3 text-right">Total Asked</th>
+            </tr>
+          </thead>
+          <tbody>
+            {beneficiaries.map((b, i) => (
+              <tr key={i} className="border-t border-zinc-100">
+                <td className="px-5 py-4 font-medium text-zinc-900">{b.name}</td>
+                <td className="px-5 py-4 text-zinc-600">{b.email}</td>
+                <td className="px-5 py-4 text-zinc-700">{b.count}</td>
+                <td className="px-5 py-4 text-right font-semibold text-emerald-600">
+                  ${b.totalAsked}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Beneficiary Requests ---------- */
+function RequestsView({ requests }) {
+  if (requests.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
+        No beneficiary requests yet.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {requests.map((r) => (
+        <div key={r.id} className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-zinc-900">{r.beneficiary_name}</h3>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    REQ_STATUS_BADGE[r.status] || "bg-zinc-100 text-zinc-700"
+                  }`}
+                >
+                  {REQ_STATUS_LABEL[r.status] || r.status}
+                </span>
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-600">
+                  → {r.ngo_name}
+                </span>
+              </div>
+              <div className="mt-0.5 text-xs text-zinc-500">
+                {r.beneficiary_email} · {fmtDate(r.created_at)}
+              </div>
+              <p className="mt-2 text-sm text-zinc-700 line-clamp-3">{r.reason}</p>
+            </div>
+            <div className="text-right">
+              <div className="font-bold text-zinc-900">${r.amount}</div>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

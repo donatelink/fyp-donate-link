@@ -26,6 +26,7 @@ export default function TrackDonation() {
   const { id } = router.query;
   const [donation, setDonation] = useState(null);
   const [updates, setUpdates] = useState([]);
+  const [beneficiaryRequest, setBeneficiaryRequest] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,17 +40,34 @@ export default function TrackDonation() {
         .eq("id", id)
         .maybeSingle();
       let ups = [];
+      let benReq = null;
       if (don) {
-        const { data } = await supabase
-          .from("donation_updates")
-          .select("*")
-          .eq("donation_id", id)
-          .order("stage", { ascending: true });
-        ups = data || [];
+        const promises = [
+          supabase
+            .from("donation_updates")
+            .select("*")
+            .eq("donation_id", id)
+            .order("stage", { ascending: true }),
+        ];
+        if (don.beneficiary_request_id) {
+          promises.push(
+            supabase
+              .from("beneficiary_requests")
+              .select("beneficiary_name, reason, amount")
+              .eq("id", don.beneficiary_request_id)
+              .maybeSingle()
+          );
+        }
+        const results = await Promise.all(promises);
+        ups = results[0].data || [];
+        if (don.beneficiary_request_id) {
+          benReq = results[1].data || null;
+        }
       }
       if (active) {
         setDonation(don || null);
         setUpdates(ups);
+        setBeneficiaryRequest(benReq);
         setLoading(false);
       }
     })();
@@ -140,6 +158,19 @@ export default function TrackDonation() {
                             {s.desc}
                           </p>
 
+                          {s.num === 4 && reached && beneficiaryRequest && (
+                            <div className="mt-2 rounded-xl border border-emerald-300 bg-emerald-50 p-3">
+                              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                                This helped
+                              </div>
+                              <div className="mt-1 font-semibold text-zinc-900">
+                                {beneficiaryRequest.beneficiary_name}
+                              </div>
+                              <p className="mt-1 text-sm text-emerald-900 line-clamp-4">
+                                {beneficiaryRequest.reason}
+                              </p>
+                            </div>
+                          )}
                           {update && (update.note || update.proof_url) && (
                             <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
                               {update.note && (

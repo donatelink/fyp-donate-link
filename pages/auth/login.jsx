@@ -39,6 +39,8 @@ export default function Login() {
         ? "/admin/dashboard"
         : profile?.role === "ngo"
         ? "/ngo/dashboard"
+        : profile?.role === "beneficiary"
+        ? "/beneficiary/dashboard"
         : "/donor/dashboard";
     router.push(dest);
   }

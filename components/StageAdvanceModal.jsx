@@ -9,11 +9,18 @@ const STAGE_DESC = {
   5: "Impact delivered — share the final proof of completion.",
 };
 
-export default function StageAdvanceModal({ open, donation, onClose, onAdvanced }) {
+export default function StageAdvanceModal({
+  open,
+  donation,
+  verifiedRequests = [],
+  onClose,
+  onAdvanced,
+}) {
   const [note, setNote] = useState("");
   const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [beneficiaryRequestId, setBeneficiaryRequestId] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -21,6 +28,7 @@ export default function StageAdvanceModal({ open, donation, onClose, onAdvanced 
       setFile(null);
       setSaving(false);
       setErrorMsg("");
+      setBeneficiaryRequestId("");
     }
   }, [open]);
 
@@ -60,18 +68,35 @@ export default function StageAdvanceModal({ open, donation, onClose, onAdvanced 
       return;
     }
 
+    const donationUpdate = {
+      stage: nextStage,
+      note: note.trim() || donation.note,
+      updated_at: new Date().toISOString(),
+    };
+    if (nextStage === 4 && beneficiaryRequestId) {
+      donationUpdate.beneficiary_request_id = beneficiaryRequestId;
+    }
+
     const { error: stageErr } = await supabase
       .from("donations")
-      .update({
-        stage: nextStage,
-        note: note.trim() || donation.note,
-        updated_at: new Date().toISOString(),
-      })
+      .update(donationUpdate)
       .eq("id", donation.id);
     if (stageErr) {
       setErrorMsg(stageErr.message);
       setSaving(false);
       return;
+    }
+
+    if (nextStage === 4 && beneficiaryRequestId) {
+      const { error: reqErr } = await supabase
+        .from("beneficiary_requests")
+        .update({ status: "funded", updated_at: new Date().toISOString() })
+        .eq("id", beneficiaryRequestId);
+      if (reqErr) {
+        setErrorMsg(`Donation advanced, but failed to mark request funded: ${reqErr.message}`);
+        setSaving(false);
+        return;
+      }
     }
 
     setSaving(false);
@@ -133,6 +158,33 @@ export default function StageAdvanceModal({ open, donation, onClose, onAdvanced 
               className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
           </div>
+
+          {nextStage === 4 && (
+            <div>
+              <label htmlFor="beneficiaryRequest" className="block text-sm font-medium text-zinc-700">
+                Funding which beneficiary request? <span className="text-zinc-400">(optional)</span>
+              </label>
+              <select
+                id="beneficiaryRequest"
+                value={beneficiaryRequestId}
+                onChange={(e) => setBeneficiaryRequestId(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="">— Not linked to a beneficiary —</option>
+                {verifiedRequests.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.beneficiary_name} · ${r.amount}
+                  </option>
+                ))}
+              </select>
+              {verifiedRequests.length === 0 && (
+                <p className="mt-1 text-xs text-zinc-500">
+                  No verified beneficiary requests yet. Verify one from the Beneficiary Requests
+                  tab to link it here.
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-zinc-700">

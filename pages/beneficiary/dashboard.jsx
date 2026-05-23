@@ -1,0 +1,256 @@
+import Head from "next/head";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import RequestFundingModal from "@/components/RequestFundingModal";
+import supabase from "@/utils/supabase";
+
+const STATUS_LABEL = {
+  pending: "Pending review",
+  verified: "Verified — awaiting funds",
+  funded: "Funded",
+  rejected: "Rejected",
+};
+
+const STATUS_BADGE = {
+  pending: "bg-amber-100 text-amber-700",
+  verified: "bg-emerald-100 text-emerald-700",
+  funded: "bg-emerald-600 text-white",
+  rejected: "bg-red-100 text-red-700",
+};
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString();
+}
+
+export default function BeneficiaryDashboard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [ngos, setNgos] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [modalNgo, setModalNgo] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.replace("/auth/login");
+        return;
+      }
+      const [ngoRes, reqRes] = await Promise.all([
+        supabase.from("ngos").select("*").eq("status", "approved").order("org_name"),
+        supabase
+          .from("beneficiary_requests")
+          .select("*")
+          .eq("beneficiary_id", session.user.id)
+          .order("created_at", { ascending: false }),
+      ]);
+      if (!active) return;
+      if (ngoRes.error) setErrorMsg(ngoRes.error.message);
+      if (reqRes.error) setErrorMsg(reqRes.error.message);
+      setNgos(ngoRes.data || []);
+      setRequests(reqRes.data || []);
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  async function reloadRequests() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+    const { data } = await supabase
+      .from("beneficiary_requests")
+      .select("*")
+      .eq("beneficiary_id", session.user.id)
+      .order("created_at", { ascending: false });
+    setRequests(data || []);
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/");
+  }
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const activeRequest = requests.find((r) =>
+    ["pending", "verified"].includes(r.status)
+  );
+  const submittedThisMonth = requests.find(
+    (r) => new Date(r.created_at) >= startOfMonth
+  );
+  const canRequest = !activeRequest && !submittedThisMonth;
+  const lockReason = activeRequest
+    ? "You have an active request — wait for it to complete."
+    : submittedThisMonth
+    ? "You've already submitted a request this month."
+    : null;
+
+  return (
+    <>
+      <Head>
+        <title>Beneficiary Dashboard · DonateLink</title>
+      </Head>
+      <div className="min-h-screen bg-zinc-50">
+        <header className="border-b border-zinc-200 bg-white">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+            <Link href="/" className="flex items-center gap-2 text-base font-bold text-zinc-900 sm:text-lg">
+              <span className="text-xl">🌍</span>
+              DonateLink
+            </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 sm:px-3">
+                Beneficiary
+              </span>
+              <button
+                onClick={handleSignOut}
+                className="rounded-full border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 hover:border-zinc-400 sm:px-4 sm:text-sm"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <RequestFundingModal
+          open={!!modalNgo}
+          ngo={modalNgo}
+          onClose={() => setModalNgo(null)}
+          onSubmitted={reloadRequests}
+        />
+
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+          <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">Get help when you need it</h1>
+          <p className="mt-1 text-sm text-zinc-600">
+            Pick a verified NGO and submit one funding request per month.
+          </p>
+
+          {errorMsg && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {errorMsg}
+            </div>
+          )}
+
+          {loading && <p className="mt-6 text-sm text-zinc-500">Loading…</p>}
+
+          {!loading && activeRequest && (
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                    Active request
+                  </div>
+                  <h2 className="mt-1 font-semibold text-zinc-900">
+                    To {activeRequest.ngo_name} · ${activeRequest.amount}
+                  </h2>
+                  <p className="mt-1 text-xs text-emerald-700">
+                    Status: {STATUS_LABEL[activeRequest.status]}
+                  </p>
+                </div>
+                <Link
+                  href={`/beneficiary/request/${activeRequest.id}`}
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                >
+                  View request →
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {!loading && (
+            <>
+              <div className="mt-8">
+                <h2 className="text-base font-semibold text-zinc-900">Choose an NGO</h2>
+                <p className="text-sm text-zinc-600">
+                  {lockReason || "Pick any verified NGO and submit your request."}
+                </p>
+
+                {ngos.length === 0 ? (
+                  <div className="mt-4 rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
+                    No verified NGOs available yet. Check back soon.
+                  </div>
+                ) : (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {ngos.map((ngo) => (
+                      <div
+                        key={ngo.id}
+                        className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-4"
+                      >
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-zinc-900">{ngo.org_name}</h3>
+                          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-600">
+                            {ngo.category}
+                          </span>
+                        </div>
+                        <p className="mt-1 flex-1 text-sm text-zinc-600 line-clamp-3">
+                          {ngo.description}
+                        </p>
+                        <p className="mt-2 text-xs text-zinc-400">{ngo.country}</p>
+                        <button
+                          onClick={() => setModalNgo(ngo)}
+                          disabled={!canRequest}
+                          title={lockReason || ""}
+                          className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:enabled:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
+                        >
+                          {canRequest ? "Request Funding" : "1 request/month limit"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {requests.length > 0 && (
+                <div className="mt-8 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+                  <div className="border-b border-zinc-200 px-4 py-3 sm:px-5 sm:py-4">
+                    <h2 className="text-base font-semibold text-zinc-900">Your Requests</h2>
+                  </div>
+                  <ul className="divide-y divide-zinc-100">
+                    {requests.map((r) => (
+                      <li key={r.id} className="px-4 py-4 sm:px-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-zinc-900">{r.ngo_name}</div>
+                            <div className="mt-0.5 text-xs text-zinc-500">
+                              ${r.amount} · {fmtDate(r.created_at)}
+                            </div>
+                            <div className="mt-2">
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                  STATUS_BADGE[r.status] || "bg-zinc-100 text-zinc-700"
+                                }`}
+                              >
+                                {STATUS_LABEL[r.status] || r.status}
+                              </span>
+                            </div>
+                          </div>
+                          <Link
+                            href={`/beneficiary/request/${r.id}`}
+                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                          >
+                            View →
+                          </Link>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+    </>
+  );
+}

@@ -54,7 +54,8 @@ export default function AdminDashboard() {
 
   const [actingId, setActingId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
-  const [advanceDon, setAdvanceDon] = useState(null);
+  const [advanceRec, setAdvanceRec] = useState(null);
+  const [advanceKind, setAdvanceKind] = useState("donation");
 
   useEffect(() => {
     loadAll();
@@ -202,10 +203,11 @@ export default function AdminDashboard() {
       </Head>
 
       <StageAdvanceModal
-        open={!!advanceDon}
-        donation={advanceDon}
+        open={!!advanceRec}
+        record={advanceRec}
+        kind={advanceKind}
         verifiedRequests={verifiedRequests}
-        onClose={() => setAdvanceDon(null)}
+        onClose={() => setAdvanceRec(null)}
         onAdvanced={loadAll}
       />
 
@@ -306,7 +308,14 @@ export default function AdminDashboard() {
                   />
                 )}
                 {view === "donations" && (
-                  <DonationsView donations={donations} onAdvance={setAdvanceDon} />
+                  <DonationsView
+                    donations={donations}
+                    requests={requests}
+                    onAdvance={(rec, kind) => {
+                      setAdvanceRec(rec);
+                      setAdvanceKind(kind);
+                    }}
+                  />
                 )}
                 {view === "ngos" && <NgosView ngoStats={ngoStats} ngoLink={ngoLink} />}
                 {view === "donors" && <DonorsView donors={donors} />}
@@ -448,11 +457,18 @@ function ApprovalsView({ ngos, actingId, approve, reject, ngoLink, copyLink, cop
 }
 
 /* ---------- Donations ---------- */
-function DonationsView({ donations, onAdvance }) {
-  if (donations.length === 0) {
+function DonationsView({ donations, requests, onAdvance }) {
+  const rows = [
+    ...donations.map((d) => ({ ...d, _kind: "donation" })),
+    ...requests
+      .filter((r) => r.status === "verified" || r.status === "funded")
+      .map((r) => ({ ...r, _kind: "beneficiary" })),
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
-        No donations yet.
+        No donations or payouts yet.
       </div>
     );
   }
@@ -460,34 +476,46 @@ function DonationsView({ donations, onAdvance }) {
     <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
       {/* Mobile cards */}
       <ul className="divide-y divide-zinc-100 md:hidden">
-        {donations.map((d) => (
-          <li key={d.id} className="px-4 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-semibold text-zinc-900">{d.donor_name}</div>
-                <div className="mt-0.5 text-xs text-zinc-500">
-                  → {d.ngo_name} · {fmtDate(d.created_at)}
+        {rows.map((r) => {
+          const isBen = r._kind === "beneficiary";
+          const personName = isBen ? r.beneficiary_name : r.donor_name;
+          return (
+            <li key={`${r._kind}-${r.id}`} className="px-4 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span
+                    className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      isBen ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {isBen ? "NGO → Beneficiary" : "Donor → NGO"}
+                  </span>
+                  <div className="mt-1 font-semibold text-zinc-900">{personName}</div>
+                  <div className="mt-0.5 text-xs text-zinc-500">
+                    {isBen ? "← " : "→ "}
+                    {r.ngo_name} · {fmtDate(r.created_at)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-zinc-900">${r.amount}</div>
+                  <span className="mt-1 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
+                    {r.stage} · {STAGE_LABEL[r.stage]}
+                  </span>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-zinc-900">${d.amount}</div>
-                <span className="mt-1 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
-                  {d.stage} · {STAGE_LABEL[d.stage]}
-                </span>
-              </div>
-            </div>
-            {d.stage < 5 ? (
-              <button
-                onClick={() => onAdvance(d)}
-                className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
-              >
-                Advance Stage →
-              </button>
-            ) : (
-              <p className="mt-3 text-center text-xs font-semibold text-emerald-600">✓ Completed</p>
-            )}
-          </li>
-        ))}
+              {r.stage < 5 ? (
+                <button
+                  onClick={() => onAdvance(r, r._kind)}
+                  className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                >
+                  Advance Stage →
+                </button>
+              ) : (
+                <p className="mt-3 text-center text-xs font-semibold text-emerald-600">✓ Completed</p>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       {/* Desktop table */}
@@ -495,7 +523,8 @@ function DonationsView({ donations, onAdvance }) {
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
             <tr>
-              <th className="px-5 py-3">Donor</th>
+              <th className="px-5 py-3">Type</th>
+              <th className="px-5 py-3">Person</th>
               <th className="px-5 py-3">NGO</th>
               <th className="px-5 py-3">Amount</th>
               <th className="px-5 py-3">Stage</th>
@@ -504,31 +533,44 @@ function DonationsView({ donations, onAdvance }) {
             </tr>
           </thead>
           <tbody>
-            {donations.map((d) => (
-              <tr key={d.id} className="border-t border-zinc-100">
-                <td className="px-5 py-4 font-medium text-zinc-900">{d.donor_name}</td>
-                <td className="px-5 py-4 text-zinc-700">{d.ngo_name}</td>
-                <td className="px-5 py-4 font-semibold text-zinc-900">${d.amount}</td>
-                <td className="px-5 py-4">
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
-                    {d.stage} · {STAGE_LABEL[d.stage]}
-                  </span>
-                </td>
-                <td className="px-5 py-4 text-zinc-500">{fmtDate(d.created_at)}</td>
-                <td className="px-5 py-4 text-right">
-                  {d.stage < 5 ? (
-                    <button
-                      onClick={() => onAdvance(d)}
-                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+            {rows.map((r) => {
+              const isBen = r._kind === "beneficiary";
+              const personName = isBen ? r.beneficiary_name : r.donor_name;
+              return (
+                <tr key={`${r._kind}-${r.id}`} className="border-t border-zinc-100">
+                  <td className="px-5 py-4">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                        isBen ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
+                      }`}
                     >
-                      Advance Stage →
-                    </button>
-                  ) : (
-                    <span className="text-xs font-semibold text-emerald-600">✓ Completed</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+                      {isBen ? "Payout" : "Donation"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 font-medium text-zinc-900">{personName}</td>
+                  <td className="px-5 py-4 text-zinc-700">{r.ngo_name}</td>
+                  <td className="px-5 py-4 font-semibold text-zinc-900">${r.amount}</td>
+                  <td className="px-5 py-4">
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
+                      {r.stage} · {STAGE_LABEL[r.stage]}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-zinc-500">{fmtDate(r.created_at)}</td>
+                  <td className="px-5 py-4 text-right">
+                    {r.stage < 5 ? (
+                      <button
+                        onClick={() => onAdvance(r, r._kind)}
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                      >
+                        Advance Stage →
+                      </button>
+                    ) : (
+                      <span className="text-xs font-semibold text-emerald-600">✓ Completed</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

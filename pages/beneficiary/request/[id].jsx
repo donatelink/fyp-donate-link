@@ -4,18 +4,13 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import supabase from "@/utils/supabase";
 
-const STEPS = [
-  { key: "pending", emoji: "⏳", title: "Pending review", desc: "Submitted — awaiting NGO verification" },
-  { key: "verified", emoji: "✅", title: "Verified", desc: "NGO confirmed your request and will contact you" },
-  { key: "funded", emoji: "💸", title: "Funded", desc: "Funds disbursed to you from donor money" },
+const STAGES = [
+  { num: 1, emoji: "⏳", title: "Pending", desc: "Request submitted, awaiting NGO" },
+  { num: 2, emoji: "✅", title: "Confirmed", desc: "NGO confirmed your request" },
+  { num: 3, emoji: "📋", title: "Allocated", desc: "Funds set aside for you" },
+  { num: 4, emoji: "💸", title: "Transferred", desc: "Funds transferred to you" },
+  { num: 5, emoji: "🌟", title: "Completed", desc: "Funding complete" },
 ];
-
-function statusToStep(status) {
-  if (status === "funded") return 3;
-  if (status === "verified") return 2;
-  if (status === "pending") return 1;
-  return 0;
-}
 
 function isPdf(url) {
   return url.toLowerCase().split("?")[0].endsWith(".pdf");
@@ -31,7 +26,7 @@ export default function TrackRequest() {
   const { id } = router.query;
   const [request, setRequest] = useState(null);
   const [ngo, setNgo] = useState(null);
-  const [donations, setDonations] = useState([]);
+  const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,22 +41,23 @@ export default function TrackRequest() {
         .maybeSingle();
 
       let ngoRow = null;
-      let donRows = [];
+      let ups = [];
       if (req) {
-        const [n, d] = await Promise.all([
+        const [n, u] = await Promise.all([
           supabase.from("ngos").select("*").eq("id", req.ngo_id).maybeSingle(),
           supabase
-            .from("donations")
-            .select("id, amount, donor_name, created_at, stage")
-            .eq("beneficiary_request_id", req.id),
+            .from("beneficiary_request_updates")
+            .select("*")
+            .eq("request_id", req.id)
+            .order("stage", { ascending: true }),
         ]);
         ngoRow = n.data;
-        donRows = d.data || [];
+        ups = u.data || [];
       }
       if (active) {
         setRequest(req || null);
         setNgo(ngoRow);
-        setDonations(donRows);
+        setUpdates(ups);
         setLoading(false);
       }
     })();
@@ -70,9 +66,9 @@ export default function TrackRequest() {
     };
   }, [id]);
 
-  const step = request ? statusToStep(request.status) : 0;
+  const currentStage = request?.stage || 0;
   const rejected = request?.status === "rejected";
-  const totalReceived = donations.reduce((s, d) => s + Number(d.amount), 0);
+  const pending = request?.status === "pending";
 
   return (
     <>
@@ -138,14 +134,25 @@ export default function TrackRequest() {
 
               {!rejected && (
                 <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
-                  <h2 className="text-base font-semibold text-zinc-900">Status</h2>
+                  <h2 className="text-base font-semibold text-zinc-900">Lifecycle & Proof</h2>
+                  <p className="text-xs text-zinc-500">
+                    Follow your request through all 5 stages with proof of every step.
+                  </p>
+
+                  {pending && (
+                    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      Awaiting NGO verification. Once verified, the NGO will start advancing the
+                      stages and contact you.
+                    </div>
+                  )}
+
                   <ol className="mt-6 space-y-5">
-                    {STEPS.map((s, i) => {
-                      const num = i + 1;
-                      const reached = num <= step;
-                      const current = num === step;
+                    {STAGES.map((s) => {
+                      const reached = !pending && s.num <= currentStage;
+                      const current = !pending && s.num === currentStage;
+                      const update = updates.find((u) => u.stage === s.num);
                       return (
-                        <li key={s.key} className="flex items-start gap-4">
+                        <li key={s.num} className="flex items-start gap-4">
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${
                               reached ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-400"
@@ -160,7 +167,7 @@ export default function TrackRequest() {
                                   reached ? "text-zinc-900" : "text-zinc-400"
                                 }`}
                               >
-                                {s.title}
+                                Stage {s.num} — {s.title}
                               </h3>
                               {current && (
                                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
@@ -176,27 +183,49 @@ export default function TrackRequest() {
                               {s.desc}
                             </p>
 
-                            {s.key === "verified" && reached && ngo && (
+                            {s.num === 2 && reached && ngo && (
                               <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
                                 <div className="font-semibold">The NGO will contact you at:</div>
                                 <div className="mt-1">{request.beneficiary_email}</div>
                                 <div className="mt-2 text-xs">
                                   NGO contact: {ngo.contact_person} · {ngo.phone} · {ngo.email}
                                 </div>
-                                {request.ngo_note && (
-                                  <p className="mt-2 text-sm">Note: {request.ngo_note}</p>
-                                )}
                               </div>
                             )}
 
-                            {s.key === "funded" && reached && (
-                              <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-                                <div className="font-semibold">
-                                  Total received: ${totalReceived}
-                                </div>
-                                <div className="mt-1 text-xs">
-                                  From {donations.length} donor donation(s).
-                                </div>
+                            {update && (update.note || update.proof_url) && (
+                              <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                                {update.note && (
+                                  <p className="text-sm text-emerald-800">{update.note}</p>
+                                )}
+                                {update.proof_url &&
+                                  (isPdf(update.proof_url) ? (
+                                    <a
+                                      href={update.proof_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="mt-2 inline-block text-sm font-semibold text-emerald-700 underline"
+                                    >
+                                      📄 View proof document
+                                    </a>
+                                  ) : (
+                                    <a
+                                      href={update.proof_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      <img
+                                        src={update.proof_url}
+                                        alt={`Proof for stage ${s.num}`}
+                                        className="mt-2 max-h-56 w-full rounded-lg border border-emerald-200 object-cover"
+                                      />
+                                    </a>
+                                  ))}
+                                {update.created_at && (
+                                  <p className="mt-1 text-xs text-emerald-600">
+                                    Updated {fmtDate(update.created_at)}
+                                  </p>
+                                )}
                               </div>
                             )}
                           </div>

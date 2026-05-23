@@ -18,6 +18,7 @@ create table if not exists public.beneficiary_requests (
   proof_url          text,
   status             text not null default 'pending'
                        check (status in ('pending','verified','rejected','funded')),
+  stage              int not null default 1 check (stage between 1 and 5),
   ngo_note           text,
   beneficiary_name   text,
   beneficiary_email  text,
@@ -25,6 +26,50 @@ create table if not exists public.beneficiary_requests (
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()
 );
+
+create table if not exists public.beneficiary_request_updates (
+  id           uuid primary key default gen_random_uuid(),
+  request_id   uuid references public.beneficiary_requests(id) on delete cascade,
+  stage        int not null check (stage between 1 and 5),
+  note         text,
+  proof_url    text,
+  created_at   timestamptz not null default now()
+);
+
+alter table public.beneficiary_request_updates enable row level security;
+
+create policy "beneficiary views own request updates"
+  on public.beneficiary_request_updates
+  for select using (
+    exists (select 1 from public.beneficiary_requests
+            where beneficiary_requests.id = beneficiary_request_updates.request_id
+              and beneficiary_requests.beneficiary_id = auth.uid())
+  );
+
+create policy "ngo views its request updates"
+  on public.beneficiary_request_updates
+  for select using (
+    exists (select 1 from public.beneficiary_requests br
+            join public.ngos n on n.id = br.ngo_id
+            where br.id = beneficiary_request_updates.request_id
+              and n.user_id = auth.uid())
+  );
+
+create policy "ngo inserts request updates"
+  on public.beneficiary_request_updates
+  for insert with check (
+    exists (select 1 from public.beneficiary_requests br
+            join public.ngos n on n.id = br.ngo_id
+            where br.id = beneficiary_request_updates.request_id
+              and n.user_id = auth.uid())
+  );
+
+create policy "admin views all request updates"
+  on public.beneficiary_request_updates
+  for select using (
+    exists (select 1 from public.users
+            where users.id = auth.uid() and users.role = 'admin')
+  );
 
 create index if not exists beneficiary_requests_beneficiary_idx
   on public.beneficiary_requests(beneficiary_id);

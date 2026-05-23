@@ -2,16 +2,25 @@ import { useEffect, useState } from "react";
 import supabase from "@/utils/supabase";
 
 const STAGES = ["Pending", "Confirmed", "Allocated", "Transferred", "Completed"];
-const STAGE_DESC = {
+
+const DONATION_DESC = {
   2: "Confirm you have received this donation.",
   3: "You've allocated the funds to a specific cause.",
   4: "Funds have been transferred to the beneficiary.",
   5: "Impact delivered — share the final proof of completion.",
 };
 
+const BENEFICIARY_DESC = {
+  2: "You've confirmed the request and set aside funds.",
+  3: "Funds allocated specifically for this beneficiary.",
+  4: "Funds physically transferred to the beneficiary.",
+  5: "Funding complete — share the final proof of delivery.",
+};
+
 export default function StageAdvanceModal({
   open,
-  donation,
+  record,
+  kind = "donation",
   verifiedRequests = [],
   onClose,
   onAdvanced,
@@ -32,10 +41,12 @@ export default function StageAdvanceModal({
     }
   }, [open]);
 
-  if (!open || !donation) return null;
+  if (!open || !record) return null;
 
-  const nextStage = donation.stage + 1;
+  const isBeneficiary = kind === "beneficiary";
+  const nextStage = record.stage + 1;
   const nextLabel = STAGES[nextStage - 1];
+  const stageDesc = isBeneficiary ? BENEFICIARY_DESC[nextStage] : DONATION_DESC[nextStage];
 
   async function handleSave() {
     setSaving(true);
@@ -44,7 +55,8 @@ export default function StageAdvanceModal({
     let proofUrl = null;
     if (file) {
       const ext = (file.name.split(".").pop() || "dat").toLowerCase();
-      const path = `${donation.id}/stage${nextStage}-${Date.now()}.${ext}`;
+      const folder = isBeneficiary ? `beneficiary/${record.id}` : record.id;
+      const path = `${folder}/stage${nextStage}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("proofs")
         .upload(path, file, { upsert: false });
@@ -56,46 +68,78 @@ export default function StageAdvanceModal({
       proofUrl = supabase.storage.from("proofs").getPublicUrl(path).data.publicUrl;
     }
 
-    const { error: insErr } = await supabase.from("donation_updates").insert({
-      donation_id: donation.id,
-      stage: nextStage,
-      note: note.trim() || null,
-      proof_url: proofUrl,
-    });
-    if (insErr) {
-      setErrorMsg(insErr.message);
-      setSaving(false);
-      return;
-    }
-
-    const donationUpdate = {
-      stage: nextStage,
-      note: note.trim() || donation.note,
-      updated_at: new Date().toISOString(),
-    };
-    if (nextStage === 4 && beneficiaryRequestId) {
-      donationUpdate.beneficiary_request_id = beneficiaryRequestId;
-    }
-
-    const { error: stageErr } = await supabase
-      .from("donations")
-      .update(donationUpdate)
-      .eq("id", donation.id);
-    if (stageErr) {
-      setErrorMsg(stageErr.message);
-      setSaving(false);
-      return;
-    }
-
-    if (nextStage === 4 && beneficiaryRequestId) {
-      const { error: reqErr } = await supabase
-        .from("beneficiary_requests")
-        .update({ status: "funded", updated_at: new Date().toISOString() })
-        .eq("id", beneficiaryRequestId);
-      if (reqErr) {
-        setErrorMsg(`Donation advanced, but failed to mark request funded: ${reqErr.message}`);
+    if (isBeneficiary) {
+      const { error: insErr } = await supabase
+        .from("beneficiary_request_updates")
+        .insert({
+          request_id: record.id,
+          stage: nextStage,
+          note: note.trim() || null,
+          proof_url: proofUrl,
+        });
+      if (insErr) {
+        setErrorMsg(insErr.message);
         setSaving(false);
         return;
+      }
+
+      const update = {
+        stage: nextStage,
+        updated_at: new Date().toISOString(),
+      };
+      if (nextStage === 5) update.status = "funded";
+
+      const { error: stageErr } = await supabase
+        .from("beneficiary_requests")
+        .update(update)
+        .eq("id", record.id);
+      if (stageErr) {
+        setErrorMsg(stageErr.message);
+        setSaving(false);
+        return;
+      }
+    } else {
+      const { error: insErr } = await supabase.from("donation_updates").insert({
+        donation_id: record.id,
+        stage: nextStage,
+        note: note.trim() || null,
+        proof_url: proofUrl,
+      });
+      if (insErr) {
+        setErrorMsg(insErr.message);
+        setSaving(false);
+        return;
+      }
+
+      const donationUpdate = {
+        stage: nextStage,
+        note: note.trim() || record.note,
+        updated_at: new Date().toISOString(),
+      };
+      if (nextStage === 4 && beneficiaryRequestId) {
+        donationUpdate.beneficiary_request_id = beneficiaryRequestId;
+      }
+
+      const { error: stageErr } = await supabase
+        .from("donations")
+        .update(donationUpdate)
+        .eq("id", record.id);
+      if (stageErr) {
+        setErrorMsg(stageErr.message);
+        setSaving(false);
+        return;
+      }
+
+      if (nextStage === 4 && beneficiaryRequestId) {
+        const { error: reqErr } = await supabase
+          .from("beneficiary_requests")
+          .update({ status: "funded", updated_at: new Date().toISOString() })
+          .eq("id", beneficiaryRequestId);
+        if (reqErr) {
+          setErrorMsg(`Donation advanced, but failed to mark request funded: ${reqErr.message}`);
+          setSaving(false);
+          return;
+        }
       }
     }
 
@@ -129,7 +173,7 @@ export default function StageAdvanceModal({
             </button>
           </div>
           <p className="mt-1 text-sm text-emerald-700">
-            <span className="font-semibold">{nextLabel}</span> — {STAGE_DESC[nextStage]}
+            <span className="font-semibold">{nextLabel}</span> — {stageDesc}
           </p>
         </div>
 
@@ -141,28 +185,41 @@ export default function StageAdvanceModal({
           )}
 
           <div className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
-            Donation: <span className="font-semibold text-zinc-800">${donation.amount}</span> from{" "}
-            <span className="font-semibold text-zinc-800">{donation.donor_name}</span>
+            {isBeneficiary ? (
+              <>
+                Payout: <span className="font-semibold text-zinc-800">${record.amount}</span> to{" "}
+                <span className="font-semibold text-zinc-800">{record.beneficiary_name}</span>
+              </>
+            ) : (
+              <>
+                Donation: <span className="font-semibold text-zinc-800">${record.amount}</span> from{" "}
+                <span className="font-semibold text-zinc-800">{record.donor_name}</span>
+              </>
+            )}
           </div>
 
           <div>
             <label htmlFor="note" className="block text-sm font-medium text-zinc-700">
-              Update note for the donor
+              Update note {isBeneficiary ? "for the beneficiary" : "for the donor"}
             </label>
             <textarea
               id="note"
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Tell the donor what happened at this stage."
+              placeholder={
+                isBeneficiary
+                  ? "Tell the beneficiary what happened at this stage."
+                  : "Tell the donor what happened at this stage."
+              }
               className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-black focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
           </div>
 
-          {nextStage === 4 && (
+          {!isBeneficiary && nextStage === 4 && (
             <div>
               <label htmlFor="beneficiaryRequest" className="block text-sm font-medium text-zinc-700">
-                Funding which beneficiary request? <span className="text-zinc-400">(optional)</span>
+                Link to a beneficiary payout? <span className="text-zinc-400">(optional)</span>
               </label>
               <select
                 id="beneficiaryRequest"
@@ -179,8 +236,7 @@ export default function StageAdvanceModal({
               </select>
               {verifiedRequests.length === 0 && (
                 <p className="mt-1 text-xs text-zinc-500">
-                  No verified beneficiary requests yet. Verify one from the Beneficiary Requests
-                  tab to link it here.
+                  No verified beneficiary requests to link. Verify one to enable this.
                 </p>
               )}
             </div>

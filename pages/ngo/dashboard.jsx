@@ -47,7 +47,8 @@ export default function NgoDashboard() {
   const [requests, setRequests] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
-  const [advanceDon, setAdvanceDon] = useState(null);
+  const [advanceRec, setAdvanceRec] = useState(null);
+  const [advanceKind, setAdvanceKind] = useState("donation");
   const [view, setView] = useState("donations");
 
   useEffect(() => {
@@ -171,10 +172,11 @@ export default function NgoDashboard() {
       </Head>
 
       <StageAdvanceModal
-        open={!!advanceDon}
-        donation={advanceDon}
+        open={!!advanceRec}
+        record={advanceRec}
+        kind={advanceKind}
         verifiedRequests={verifiedRequests}
-        onClose={() => setAdvanceDon(null)}
+        onClose={() => setAdvanceRec(null)}
         onAdvanced={() => {
           loadDonations();
           loadRequests();
@@ -263,10 +265,14 @@ export default function NgoDashboard() {
               <DonationsView
                 ngo={ngo}
                 donations={donations}
+                requests={requests}
                 donationLink={donationLink}
                 copied={copied}
                 copyLink={copyLink}
-                onAdvance={setAdvanceDon}
+                onAdvance={(rec, kind) => {
+                  setAdvanceRec(rec);
+                  setAdvanceKind(kind);
+                }}
                 totalRaised={totalRaised}
                 completed={completed}
               />
@@ -286,6 +292,7 @@ export default function NgoDashboard() {
 function DonationsView({
   ngo,
   donations,
+  requests,
   donationLink,
   copied,
   copyLink,
@@ -293,18 +300,31 @@ function DonationsView({
   totalRaised,
   completed,
 }) {
+  // Merge donor donations with verified+/funded beneficiary requests for a single list.
+  const rows = [
+    ...donations.map((d) => ({ ...d, _kind: "donation" })),
+    ...requests
+      .filter((r) => r.status === "verified" || r.status === "funded")
+      .map((r) => ({ ...r, _kind: "beneficiary" })),
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const payoutCount = rows.filter((r) => r._kind === "beneficiary").length;
+  const payoutCommitted = rows
+    .filter((r) => r._kind === "beneficiary")
+    .reduce((s, r) => s + Number(r.amount), 0);
+
   return (
     <>
       <p className="mt-1 text-sm text-zinc-600">
-        Manage donations to <span className="font-semibold">{ngo.org_name}</span> and keep donors
-        updated on every stage.
+        Manage donations to <span className="font-semibold">{ngo.org_name}</span> and payouts to
+        verified beneficiaries — all on the same 5-stage flow.
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <StatCard label="Total Raised" value={`$${totalRaised}`} />
         <StatCard label="Donations" value={donations.length} />
+        <StatCard label="Payouts" value={`${payoutCount} · $${payoutCommitted}`} />
         <StatCard label="Completed" value={completed} accent />
-        <StatCard label="In Progress" value={donations.length - completed} />
       </div>
 
       <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
@@ -331,54 +351,74 @@ function DonationsView({
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 px-4 py-3 sm:px-5 sm:py-4">
-          <h2 className="text-base font-semibold text-zinc-900">Donations to your NGO</h2>
+          <h2 className="text-base font-semibold text-zinc-900">Donations & Payouts</h2>
           <p className="text-xs text-zinc-500">
-            Advance each donation through the 5 stages. At stage 4 you can link it to a verified
-            beneficiary request.
+            Donor donations and verified beneficiary payouts. Advance each through the 5 stages.
           </p>
         </div>
 
-        {donations.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-zinc-500">
-            No donations yet. Share your donation link to start receiving support.
+            Nothing here yet. Share your donation link, or verify a beneficiary request to start
+            a payout.
           </div>
         ) : (
           <ul className="divide-y divide-zinc-100">
-            {donations.map((d) => (
-              <li key={d.id} className="px-4 py-4 sm:px-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-zinc-900">{d.donor_name}</div>
-                    <div className="mt-0.5 text-xs text-zinc-500">
-                      {d.donor_email} · {d.donation_type} · {fmtDate(d.created_at)}
+            {rows.map((r) => {
+              const isBen = r._kind === "beneficiary";
+              const personName = isBen ? r.beneficiary_name : r.donor_name;
+              const personEmail = isBen ? r.beneficiary_email : r.donor_email;
+              const subtype = isBen ? "Beneficiary Payout" : r.donation_type;
+              return (
+                <li key={`${r._kind}-${r.id}`} className="px-4 py-4 sm:px-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                            isBen ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
+                          {isBen ? "NGO → Beneficiary" : "Donor → NGO"}
+                        </span>
+                        <span className="font-semibold text-zinc-900">{personName}</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-zinc-500">
+                        {personEmail} · {subtype} · {fmtDate(r.created_at)}
+                      </div>
+                      <div className="mt-2">
+                        <StageBadge stage={r.stage} />
+                      </div>
                     </div>
-                    <div className="mt-2">
-                      <StageBadge stage={d.stage} />
+                    <div className="text-right">
+                      <div className="font-bold text-zinc-900">${r.amount}</div>
+                      {r.stage < 5 ? (
+                        <button
+                          onClick={() => onAdvance(r, r._kind)}
+                          className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                        >
+                          Advance → {STAGE_LABELS[r.stage]}
+                        </button>
+                      ) : (
+                        <span className="mt-2 inline-block text-xs font-semibold text-emerald-600">
+                          ✓ Completed
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-zinc-900">${d.amount}</div>
-                    {d.stage < 5 ? (
-                      <button
-                        onClick={() => onAdvance(d)}
-                        className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                      >
-                        Advance → {STAGE_LABELS[d.stage]}
-                      </button>
-                    ) : (
-                      <span className="mt-2 inline-block text-xs font-semibold text-emerald-600">
-                        ✓ Completed
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {d.note && (
-                  <p className="mt-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
-                    Note to donor: {d.note}
-                  </p>
-                )}
-              </li>
-            ))}
+                  {!isBen && r.note && (
+                    <p className="mt-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+                      Note to donor: {r.note}
+                    </p>
+                  )}
+                  {isBen && (
+                    <p className="mt-2 rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-600 line-clamp-2">
+                      Request: {r.reason}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -506,7 +546,12 @@ function RequestsView({ requests, reload }) {
               )}
               {r.status === "verified" && (
                 <p className="mt-2 text-xs font-semibold text-emerald-600">
-                  Link a donation at stage 4 to fund
+                  Now in Donations tab — advance stages to fund
+                </p>
+              )}
+              {r.status === "funded" && (
+                <p className="mt-2 text-xs font-semibold text-emerald-600">
+                  ✓ Funded · Stage {r.stage}/5
                 </p>
               )}
             </div>

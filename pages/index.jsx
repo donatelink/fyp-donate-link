@@ -130,7 +130,7 @@ function Logo() {
       <img
         src="/donatelink-logo.png"
         alt="DonateLink"
-        className="h-[54px] w-auto"
+        className="h-[46px] w-auto"
       />
     </Link>
   );

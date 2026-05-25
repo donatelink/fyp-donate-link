@@ -505,14 +505,9 @@ function Causes() {
                 key={c.name}
                 className="card-hover rounded-3xl bg-white p-6 ring-1 ring-emerald-100"
               >
-                <div className="flex items-center justify-between">
-                  <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${iconBg}`}>
-                    <I size={20} strokeWidth={2.2} />
-                  </span>
-                  <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-600">
-                    {c.tag}
-                  </span>
-                </div>
+                <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${iconBg}`}>
+                  <I size={20} strokeWidth={2.2} />
+                </span>
                 <h3 className="mt-4 text-lg font-bold text-emerald-950">{c.name}</h3>
                 <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-emerald-50">
                   <div className={`h-full rounded-full ${bar}`} style={{ width: `${c.pct}%` }} />

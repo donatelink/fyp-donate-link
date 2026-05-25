@@ -8,7 +8,7 @@ import Head from "next/head";
 export default function AuthLayout({
   title,
   imageUrl,
-  imageGradient = "from-emerald-900 via-emerald-700 to-emerald-500",
+  imageGradient = "from-emerald-900 via-teal-700 to-cyan-500",
   tagline = { eyebrow: "Donate · Track · Trust", line: "Every donation, transparently followed end to end." },
   children,
 }) {
@@ -20,17 +20,28 @@ export default function AuthLayout({
       <div className="flex min-h-screen flex-col bg-white md:flex-row">
         {/* Image side */}
         <div className={`relative hidden overflow-hidden bg-gradient-to-br md:block md:w-1/2 animate-auth-fade-in ${imageGradient}`}>
-          {imageUrl && (
-            <img
-              src={imageUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
+          {imageUrl ? (
+            <>
+              <img
+                src={imageUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+            </>
+          ) : (
+            <>
+              {/* Modern decorative orbs */}
+              <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-emerald-300/40 blur-3xl" />
+              <div className="pointer-events-none absolute top-1/3 -right-20 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-20 left-1/4 h-96 w-96 rounded-full bg-teal-400/30 blur-3xl" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_40%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            </>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
 
           <div className="relative z-10 flex h-full flex-col justify-end p-10 lg:p-16 animate-auth-slide-right">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/80">

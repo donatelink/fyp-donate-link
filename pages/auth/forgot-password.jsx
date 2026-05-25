@@ -34,8 +34,7 @@ export default function ForgotPassword() {
   return (
     <AuthLayout
       title="Forgot Password"
-      imageUrl="https://images.unsplash.com/photo-1518608774889-b04d2abe7702?w=900&h=1400&fit=crop&q=80&auto=format"
-      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
+      imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
       tagline={{ eyebrow: "Account recovery", line: "We'll get you back in, fast." }}
     >
       <Link

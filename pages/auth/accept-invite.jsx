@@ -63,8 +63,7 @@ export default function AcceptInvite() {
   return (
     <AuthLayout
       title="Activate NGO Account"
-      imageUrl="https://images.unsplash.com/photo-1488161628813-04466f872be2?w=900&h=1400&fit=crop&q=80&auto=format"
-      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
+      imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
       tagline={{ eyebrow: "You're approved", line: "Set your password and start receiving donations." }}
     >
       <Link

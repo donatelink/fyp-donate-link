@@ -64,8 +64,7 @@ export default function ResetPassword() {
   return (
     <AuthLayout
       title="Reset Password"
-      imageUrl="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&h=1400&fit=crop&q=80&auto=format"
-      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
+      imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
       tagline={{ eyebrow: "Fresh start", line: "A new password and you're back on track." }}
     >
       <Link

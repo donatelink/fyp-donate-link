@@ -67,8 +67,7 @@ export default function Login() {
   return (
     <AuthLayout
       title="Sign In"
-      imageUrl="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=900&h=1400&fit=crop&q=80&auto=format"
-      imageGradient="from-emerald-900 via-emerald-700 to-emerald-500"
+      imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
       tagline={{ eyebrow: "Welcome back", line: "Pick up where your impact left off." }}
     >
       <Link

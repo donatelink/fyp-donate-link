@@ -154,9 +154,8 @@ export default function DonorDashboard() {
       <div className="min-h-screen bg-zinc-50">
         <header className="border-b border-zinc-200 bg-white">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-            <Link href="/" className="flex items-center gap-2 text-base font-bold text-zinc-900 sm:text-lg">
-              <span className="text-xl">🌍</span>
-              DonateLink
+            <Link href="/" className="flex items-center">
+              <img src="/donatelink-logo.png" alt="DonateLink" className="h-[46px] w-auto" />
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="hidden text-sm text-zinc-600 sm:inline">Donor</span>

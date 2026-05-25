@@ -245,9 +245,8 @@ export default function AdminDashboard() {
         {/* Sidebar */}
         <aside className="border-b border-zinc-200 bg-white md:w-60 md:shrink-0 md:border-b-0 md:border-r">
           <div className="flex items-center justify-between px-5 py-4">
-            <Link href="/" className="flex items-center gap-2 text-lg font-bold text-zinc-900">
-              <span className="text-xl">🌍</span>
-              DonateLink
+            <Link href="/" className="flex items-center">
+              <img src="/donatelink-logo.png" alt="DonateLink" className="h-[46px] w-auto" />
             </Link>
             <button
               onClick={handleSignOut}

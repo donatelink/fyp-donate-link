@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 // Full-screen auth layout: image/gradient on the left half, form column
@@ -87,7 +88,9 @@ export default function AuthLayout({
 
           <div className="relative z-10 flex h-full flex-col justify-between p-10 lg:p-16 animate-auth-slide-right">
             {/* Brand mark */}
-            <img src="/donatelink-mark.png" alt="DonateLink" className="w-[141px] h-auto" />
+            <Link href="/" className="inline-flex">
+              <img src="/donatelink-mark.png" alt="DonateLink" className="w-[141px] h-auto" />
+            </Link>
 
             {/* Rotating donation quote */}
             {quotes && quotes.length > 0 && (

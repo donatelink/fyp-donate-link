@@ -87,9 +87,7 @@ export default function AuthLayout({
 
           <div className="relative z-10 flex h-full flex-col justify-between p-10 lg:p-16 animate-auth-slide-right">
             {/* Brand mark */}
-            <div className="inline-flex items-center rounded-2xl bg-white/95 px-4 py-2 shadow-sm ring-1 ring-white/30 backdrop-blur-sm">
-              <img src="/donatelink-logo.png" alt="DonateLink" className="h-[54px] w-auto" />
-            </div>
+            <img src="/donatelink-mark.png" alt="DonateLink" className="h-[54px] w-[54px]" />
 
             {/* Rotating donation quote */}
             {quotes && quotes.length > 0 && (

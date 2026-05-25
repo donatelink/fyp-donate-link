@@ -126,11 +126,12 @@ const TRUST = [
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white">
-        <Heart size={18} strokeWidth={2.5} className="fill-white" />
-      </span>
-      <span className="text-lg font-bold tracking-tight text-zinc-900">DonateLink</span>
+    <Link href="/" className="flex items-center">
+      <img
+        src="/donatelink-logo.png"
+        alt="DonateLink"
+        className="h-9 w-auto"
+      />
     </Link>
   );
 }

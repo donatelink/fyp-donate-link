@@ -99,35 +99,23 @@ export default function AuthLayout({
             {/* Rotating donation quote */}
             {quotes && quotes.length > 0 && (
               <div className="my-8">
-                <div className="relative rounded-3xl bg-white/10 p-8 backdrop-blur-md ring-1 ring-white/20">
-                  <svg
-                    className="absolute -top-4 left-6 h-10 w-10 text-white/40"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M7.17 6A5.17 5.17 0 0 0 2 11.17V18h7.5v-7.5H5.83a3.34 3.34 0 0 1 3.34-2.67V6H7.17zm9 0A5.17 5.17 0 0 0 11 11.17V18h7.5v-7.5h-3.67a3.34 3.34 0 0 1 3.34-2.67V6h-2z" />
-                  </svg>
-                  <div key={quoteIdx} className="animate-auth-fade-up">
-                    <p className="text-xl font-medium leading-relaxed text-white sm:text-2xl">
-                      {quotes[quoteIdx].text}
-                    </p>
-                    <p className="mt-4 text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                      — {quotes[quoteIdx].author}
-                    </p>
-                  </div>
-                  {quotes.length > 1 && (
-                    <div className="mt-6 flex gap-1.5">
-                      {quotes.map((_, i) => (
-                        <span
-                          key={i}
-                          className={`h-1 rounded-full transition-all duration-500 ${
-                            i === quoteIdx ? "w-8 bg-white" : "w-2 bg-white/30"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  )}
+                <div key={quoteIdx} className="animate-auth-fade-up">
+                  <p className="text-2xl font-medium leading-relaxed text-white drop-shadow-md sm:text-3xl">
+                    “{quotes[quoteIdx].text}”
+                  </p>
                 </div>
+                {quotes.length > 1 && (
+                  <div className="mt-6 flex gap-1.5">
+                    {quotes.map((_, i) => (
+                      <span
+                        key={i}
+                        className={`h-1 rounded-full transition-all duration-500 ${
+                          i === quoteIdx ? "w-8 bg-white" : "w-2 bg-white/30"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

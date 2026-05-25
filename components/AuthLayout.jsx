@@ -16,6 +16,36 @@ const DEFAULT_FEATURES = [
   "End-to-end donation tracking",
   "Real-time photo & milestone updates",
 ];
+const DEFAULT_STEPS = [
+  {
+    label: "You donate",
+    body: "Pick a verified cause and contribute securely.",
+    icon: (
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    ),
+  },
+  {
+    label: "We verify",
+    body: "Every NGO is admin-approved before going live.",
+    icon: (
+      <>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    ),
+  },
+  {
+    label: "They share",
+    body: "Beneficiaries post photo updates at every milestone.",
+    icon: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <circle cx="12" cy="12" r="3" />
+        <path d="M9 5 10.5 3h3L15 5" />
+      </>
+    ),
+  },
+];
 
 export default function AuthLayout({
   title,
@@ -24,6 +54,7 @@ export default function AuthLayout({
   tagline = { eyebrow: "Donate · Track · Trust", line: "Every donation, transparently {rot}." },
   rotatingWords = DEFAULT_ROTATING,
   features = DEFAULT_FEATURES,
+  steps = DEFAULT_STEPS,
   children,
 }) {
   const [wordIdx, setWordIdx] = useState(0);
@@ -79,6 +110,31 @@ export default function AuthLayout({
               </div>
               <span className="text-base font-bold tracking-tight">DonateLink</span>
             </div>
+
+            {/* How it works showcase */}
+            {steps && steps.length > 0 && (
+              <div className="my-8 space-y-3 animate-stagger">
+                {steps.map((s, i) => (
+                  <div
+                    key={s.label}
+                    className="flex items-start gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur-md ring-1 ring-white/20 transition hover:bg-white/15"
+                  >
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-white/25 to-white/5 text-white ring-1 ring-white/20">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        {s.icon}
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 text-sm font-semibold text-white">
+                        <span className="text-xs font-bold text-white/60">0{i + 1}</span>
+                        {s.label}
+                      </p>
+                      <p className="mt-0.5 text-sm leading-snug text-white/75">{s.body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div>
               {features && features.length > 0 && (

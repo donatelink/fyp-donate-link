@@ -92,6 +92,31 @@ body {
 .animate-stagger > *:nth-child(7) { animation-delay: 420ms; }
 .animate-stagger > *:nth-child(8) { animation-delay: 480ms; }
 
+@keyframes orb-float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.12); }
+}
+@keyframes orb-float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 35px) scale(0.92); }
+}
+@keyframes orb-float-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(25px, 30px) scale(1.08); }
+}
+.animate-orb-a { animation: orb-float-a 13s ease-in-out infinite; }
+.animate-orb-b { animation: orb-float-b 17s ease-in-out infinite; }
+.animate-orb-c { animation: orb-float-c 15s ease-in-out infinite; }
+
+@keyframes word-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-word {
+  display: inline-block;
+  animation: word-in 480ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
 @keyframes page-in {
   from {
     opacity: 0;
@@ -122,7 +147,11 @@ body {
   .animate-auth-fade-in,
   .animate-auth-slide-right,
   .animate-page-in,
-  .animate-stagger > * {
+  .animate-stagger > *,
+  .animate-orb-a,
+  .animate-orb-b,
+  .animate-orb-c,
+  .animate-word {
     animation: none;
   }
   .card-hover {

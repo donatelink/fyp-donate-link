@@ -66,6 +66,7 @@ export default function ResetPassword() {
       title="Reset Password"
       imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
       tagline={{ eyebrow: "Fresh start", line: "A new password and you're back on track." }}
+      features={[]}
     >
       <Link
         href="/auth/login"

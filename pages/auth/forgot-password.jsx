@@ -36,6 +36,7 @@ export default function ForgotPassword() {
       title="Forgot Password"
       imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
       tagline={{ eyebrow: "Account recovery", line: "We'll get you back in, fast." }}
+      features={[]}
     >
       <Link
         href="/auth/login"

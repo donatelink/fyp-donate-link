@@ -128,7 +128,8 @@ export default function Register() {
     <AuthLayout
       title="Create Account"
       imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
-      tagline={{ eyebrow: "Join DonateLink", line: "Give, receive, and trace every step of the impact." }}
+      tagline={{ eyebrow: "Join DonateLink", line: "Give, receive, and {rot} every step." }}
+      rotatingWords={["track", "trust", "verify"]}
     >
       <Link
         href="/"

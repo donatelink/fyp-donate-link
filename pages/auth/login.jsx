@@ -68,7 +68,8 @@ export default function Login() {
     <AuthLayout
       title="Sign In"
       imageGradient="from-emerald-900 via-teal-700 to-cyan-500"
-      tagline={{ eyebrow: "Welcome back", line: "Pick up where your impact left off." }}
+      tagline={{ eyebrow: "Welcome back", line: "Your impact, {rot}." }}
+      rotatingWords={["continued", "tracked", "growing"]}
     >
       <Link
         href="/"

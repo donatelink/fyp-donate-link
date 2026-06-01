@@ -6,7 +6,7 @@ create table if not exists public.donations (
   donor_id      uuid references auth.users(id) on delete set null,
   ngo_id        uuid references public.ngos(id) on delete cascade,
   amount        numeric not null check (amount > 0),
-  donation_type text not null default 'One-Time',
+  donation_type text not null default 'Others',
   stage         int not null default 1 check (stage between 1 and 5),
   note          text,
   donor_name    text,

@@ -86,30 +86,30 @@ const FEATURES = [
   {
     Icon: Globe,
     title: "Open to all",
-    body: "Open to all Causes you can support (Food & Hunger, Childcare, Health & Medical, Education, Disaster & Emergency Relief, Small Business Support, General Charity / Open Donation, Elderly & Disabled Support).",
+    body: "Support any cause you care about: Hunger & Food Crisis, Clean Water Access, Children Education, Medical & Healthcare, Disaster Relief, Orphan Care, Elderly Care, and more.",
   },
 ];
 
 const CAUSES = [
-  { name: "Food & Water", raised: "$3,600", pct: 72, accent: "emerald", tag: "Sadaqah", Icon: Utensils },
-  { name: "Orphan Care", raised: "$1,200", pct: 30, accent: "amber", tag: "Zakat", Icon: Baby },
-  { name: "Education", raised: "$2,730", pct: 91, accent: "emerald", tag: "Sadaqah", Icon: GraduationCap },
-  { name: "Medical Aid", raised: "$9,000", pct: 45, accent: "amber", tag: "Urgent", Icon: Stethoscope },
+  { name: "Food & Water", raised: "$3,600", pct: 72, accent: "emerald", tag: "Hunger & Food", Icon: Utensils },
+  { name: "Orphan Care", raised: "$1,200", pct: 30, accent: "amber", tag: "Orphan Care", Icon: Baby },
+  { name: "Education", raised: "$2,730", pct: 91, accent: "emerald", tag: "Children Education", Icon: GraduationCap },
+  { name: "Medical Aid", raised: "$9,000", pct: 45, accent: "amber", tag: "Medical & Healthcare", Icon: Stethoscope },
 ];
 
 const VOICES = [
   {
-    quote: "I finally know my Zakat actually arrived. The photo update made my week.",
+    quote: "I funded a clean water well and followed every stage. The completion photo of families using it made my week.",
     who: "Ayesha",
     role: "Donor",
   },
   {
-    quote: "Setting up our NGO took an afternoon. Donors trust us more once they see the proofs going live.",
+    quote: "We run hunger, medical and orphan-care causes here. Donors trust us more once they see each proof go live.",
     who: "Hope Foundation",
     role: "NGO",
   },
   {
-    quote: "I needed help with my rent and didn't know where to ask. The NGO replied within a day.",
+    quote: "I needed urgent medical care and didn't know where to ask. The NGO verified my request and covered the treatment within days.",
     who: "Khalid",
     role: "Beneficiary",
   },

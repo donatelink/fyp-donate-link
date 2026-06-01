@@ -17,6 +17,15 @@ const BENEFICIARY_DESC = {
   5: "Funding complete — share the final proof of delivery.",
 };
 
+// Stage-specific proof labels. Stages 4 (transfer) and 5 (delivery) require proof.
+const PROOF_LABEL = {
+  4: "Proof of transfer (bank slip / transaction receipt)",
+  5: "Proof of delivery (photo or document)",
+};
+function proofLabelFor(stage) {
+  return PROOF_LABEL[stage] || "Proof of impact";
+}
+
 export default function StageAdvanceModal({
   open,
   record,
@@ -47,10 +56,17 @@ export default function StageAdvanceModal({
   const nextStage = record.stage + 1;
   const nextLabel = STAGES[nextStage - 1];
   const stageDesc = isBeneficiary ? BENEFICIARY_DESC[nextStage] : DONATION_DESC[nextStage];
+  const proofRequired = nextStage === 4 || nextStage === 5;
 
   async function handleSave() {
-    setSaving(true);
     setErrorMsg("");
+
+    if (proofRequired && !file) {
+      setErrorMsg("Please attach the required proof to advance to this stage.");
+      return;
+    }
+
+    setSaving(true);
 
     let proofUrl = null;
     if (file) {
@@ -244,9 +260,20 @@ export default function StageAdvanceModal({
 
           <div>
             <label className="block text-sm font-medium text-zinc-700">
-              Proof of impact <span className="text-zinc-400">(photo or PDF — optional)</span>
+              {proofLabelFor(nextStage)}{" "}
+              {proofRequired ? (
+                <span className="text-red-500">* required</span>
+              ) : (
+                <span className="text-zinc-400">(photo or PDF — optional)</span>
+              )}
             </label>
-            <label className="mt-1 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-zinc-300 px-3 py-4 text-sm text-zinc-500 hover:border-emerald-400 hover:bg-emerald-50">
+            <label
+              className={`mt-1 flex cursor-pointer items-center justify-center rounded-lg border border-dashed px-3 py-4 text-sm hover:border-emerald-400 hover:bg-emerald-50 ${
+                proofRequired && !file
+                  ? "border-red-300 text-red-500"
+                  : "border-zinc-300 text-zinc-500"
+              }`}
+            >
               <input
                 type="file"
                 accept="image/*,application/pdf"

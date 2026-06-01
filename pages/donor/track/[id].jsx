@@ -12,8 +12,33 @@ const STAGES = [
   { num: 5, emoji: "🌟", title: "Completed", desc: "Impact delivered" },
 ];
 
+// Proof the NGO uploaded on the beneficiary's own payout timeline.
+const BEN_PROOF_LABEL = { 4: "Transfer receipt", 5: "Delivery proof" };
+
 function isPdf(url) {
   return url.toLowerCase().split("?")[0].endsWith(".pdf");
+}
+
+function ProofLink({ url, label }) {
+  if (!url) return null;
+  return isPdf(url) ? (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 inline-block text-sm font-semibold text-emerald-700 underline"
+    >
+      📄 {label}
+    </a>
+  ) : (
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      <img
+        src={url}
+        alt={label}
+        className="mt-2 max-h-56 w-full rounded-lg border border-emerald-200 object-cover"
+      />
+    </a>
+  );
 }
 
 function fmtDate(iso) {
@@ -27,6 +52,7 @@ export default function TrackDonation() {
   const [donation, setDonation] = useState(null);
   const [updates, setUpdates] = useState([]);
   const [beneficiaryRequest, setBeneficiaryRequest] = useState(null);
+  const [beneficiaryUpdates, setBeneficiaryUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +67,7 @@ export default function TrackDonation() {
         .maybeSingle();
       let ups = [];
       let benReq = null;
+      let benUps = [];
       if (don) {
         const promises = [
           supabase
@@ -55,19 +82,26 @@ export default function TrackDonation() {
               .from("beneficiary_requests")
               .select("beneficiary_name, reason, amount")
               .eq("id", don.beneficiary_request_id)
-              .maybeSingle()
+              .maybeSingle(),
+            supabase
+              .from("beneficiary_request_updates")
+              .select("*")
+              .eq("request_id", don.beneficiary_request_id)
+              .order("stage", { ascending: true })
           );
         }
         const results = await Promise.all(promises);
         ups = results[0].data || [];
         if (don.beneficiary_request_id) {
           benReq = results[1].data || null;
+          benUps = results[2].data || [];
         }
       }
       if (active) {
         setDonation(don || null);
         setUpdates(ups);
         setBeneficiaryRequest(benReq);
+        setBeneficiaryUpdates(benUps);
         setLoading(false);
       }
     })();
@@ -169,6 +203,32 @@ export default function TrackDonation() {
                               <p className="mt-1 text-sm text-emerald-900 line-clamp-4">
                                 {beneficiaryRequest.reason}
                               </p>
+
+                              {beneficiaryUpdates.some(
+                                (u) => u.proof_url && BEN_PROOF_LABEL[u.stage]
+                              ) && (
+                                <div className="mt-3 border-t border-emerald-300 pt-3">
+                                  <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                                    Proof the NGO paid the beneficiary
+                                  </div>
+                                  {beneficiaryUpdates
+                                    .filter((u) => u.proof_url && BEN_PROOF_LABEL[u.stage])
+                                    .map((u) => (
+                                      <div key={u.id} className="mt-2">
+                                        <p className="text-sm font-medium text-emerald-900">
+                                          {BEN_PROOF_LABEL[u.stage]}
+                                        </p>
+                                        {u.note && (
+                                          <p className="text-sm text-emerald-800">{u.note}</p>
+                                        )}
+                                        <ProofLink
+                                          url={u.proof_url}
+                                          label={`View ${BEN_PROOF_LABEL[u.stage].toLowerCase()}`}
+                                        />
+                                      </div>
+                                    ))}
+                                </div>
+                              )}
                             </div>
                           )}
                           {update && (update.note || update.proof_url) && (

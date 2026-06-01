@@ -598,35 +598,6 @@ function RequestsView({ requests, profiles = {}, reload }) {
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{r.reason}</p>
 
-              {p ? (
-                <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs sm:grid-cols-2">
-                  <div>
-                    <dt className="font-semibold text-zinc-500">Father name</dt>
-                    <dd className="text-zinc-800">{p.father_name}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-zinc-500">Government ID</dt>
-                    <dd className="text-zinc-800">{p.gov_id}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-zinc-500">Phone</dt>
-                    <dd className="text-zinc-800">{p.phone}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-semibold text-zinc-500">Family members</dt>
-                    <dd className="text-zinc-800">{p.family_members}</dd>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <dt className="font-semibold text-zinc-500">Address</dt>
-                    <dd className="whitespace-pre-wrap text-zinc-800">{p.address}</dd>
-                  </div>
-                </dl>
-              ) : (
-                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                  Beneficiary has not completed their profile.
-                </p>
-              )}
-
               {r.proof_url && (
                 <a
                   href={r.proof_url}
@@ -679,6 +650,35 @@ function RequestsView({ requests, profiles = {}, reload }) {
               )}
             </div>
           </div>
+
+          {p ? (
+            <dl className="mt-3 flex flex-wrap gap-x-8 gap-y-2 border-t border-zinc-100 pt-3 text-xs">
+              <div>
+                <dt className="font-semibold text-zinc-500">Father name</dt>
+                <dd className="text-zinc-800">{p.father_name}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-zinc-500">Government ID</dt>
+                <dd className="text-zinc-800">{p.gov_id}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-zinc-500">Phone</dt>
+                <dd className="text-zinc-800">{p.phone}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-zinc-500">Family members</dt>
+                <dd className="text-zinc-800">{p.family_members}</dd>
+              </div>
+              <div className="min-w-0 flex-1">
+                <dt className="font-semibold text-zinc-500">Address</dt>
+                <dd className="text-zinc-800">{p.address}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              Beneficiary has not completed their profile.
+            </p>
+          )}
         </div>
         );
       })}

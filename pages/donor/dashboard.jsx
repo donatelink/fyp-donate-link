@@ -44,6 +44,7 @@ export default function DonorDashboard() {
   const [donations, setDonations] = useState([]);
   const [ratings, setRatings] = useState([]);
   const [userId, setUserId] = useState(null);
+  const [name, setName] = useState("");
   const [modalNgo, setModalNgo] = useState(null);
   const [ratingNgo, setRatingNgo] = useState(null);
   const [reviewsNgo, setReviewsNgo] = useState(null);
@@ -59,7 +60,7 @@ export default function DonorDashboard() {
         router.replace("/auth/login");
         return;
       }
-      const [ngoRes, donRes, ratingRes] = await Promise.all([
+      const [ngoRes, donRes, ratingRes, userRes] = await Promise.all([
         supabase.from("ngos").select("*").eq("status", "approved").order("org_name"),
         supabase
           .from("donations")
@@ -67,11 +68,13 @@ export default function DonorDashboard() {
           .eq("donor_id", session.user.id)
           .order("created_at", { ascending: false }),
         supabase.from("ngo_ratings").select("*"),
+        supabase.from("users").select("name").eq("id", session.user.id).single(),
       ]);
       if (!active) return;
       if (ngoRes.error) setErrorMsg(ngoRes.error.message);
       if (donRes.error) setErrorMsg(donRes.error.message);
       setUserId(session.user.id);
+      setName(userRes.data?.name || "");
       setNgos(ngoRes.data || []);
       setDonations(donRes.data || []);
       setRatings(ratingRes.data || []);
@@ -206,13 +209,19 @@ export default function DonorDashboard() {
           <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">Your Impact</h1>
           <p className="mt-1 text-sm text-zinc-600">Donate to a verified NGO and track it on-chain.</p>
 
+          {!loading && name && (
+            <p className="mt-3 text-2xl font-bold text-zinc-700 sm:text-3xl">
+              Welcome back, <span className="font-extrabold text-emerald-700">{name}</span> 👋
+            </p>
+          )}
+
           {errorMsg && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {errorMsg}
             </div>
           )}
 
-          {loading && <p className="mt-6 text-sm text-zinc-500">Loading…</p>}
+          {loading && <DashboardSkeleton />}
 
           {!loading && (
             <>
@@ -379,6 +388,37 @@ export default function DonorDashboard() {
         </main>
       </div>
     </>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="mt-6 animate-pulse">
+      <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
+            <div className="h-3 w-24 rounded bg-zinc-200" />
+            <div className="mt-3 h-7 w-20 rounded bg-zinc-200" />
+          </div>
+        ))}
+      </div>
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="rounded-2xl border border-zinc-200 bg-white p-5">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 shrink-0 rounded-xl bg-zinc-200" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3.5 w-2/3 rounded bg-zinc-200" />
+                <div className="h-2.5 w-1/3 rounded bg-zinc-100" />
+              </div>
+            </div>
+            <div className="mt-4 h-2.5 w-full rounded bg-zinc-100" />
+            <div className="mt-2 h-2.5 w-4/5 rounded bg-zinc-100" />
+            <div className="mt-5 h-9 w-full rounded-lg bg-zinc-200" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

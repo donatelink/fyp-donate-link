@@ -246,10 +246,16 @@ export default function NgoDashboard() {
             <div className="flex items-center gap-2">
               <span className="text-2xl">{activeMenu?.icon}</span>
               <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">{activeMenu?.label}</h1>
-              <span className="ml-auto rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="ml-auto rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-emerald-700">
                 NGO
               </span>
             </div>
+
+            {!loading && ngo && (
+              <p className="mt-2 text-lg text-zinc-600 sm:text-xl">
+                Welcome to <span className="font-extrabold text-emerald-700">{ngo.org_name}</span>
+              </p>
+            )}
 
             {loading && <p className="mt-6 text-sm text-zinc-500">Loading your dashboard…</p>}
 

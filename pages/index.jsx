@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  CreditCard,
   Droplets,
   FileText,
   Globe,
@@ -381,7 +382,6 @@ function Features() {
 }
 
 function Blockchain() {
-  const networks = ["Stripe checkout", "Polygon", "Ethereum", "Public block explorer"];
   return (
     <section id="chain" className="bg-emerald-950">
       <div className="mx-auto max-w-5xl px-6 py-24 text-center">
@@ -392,19 +392,30 @@ function Blockchain() {
           Every donation, <span className="text-amber-400">verifiable</span> end to end.
         </h2>
         <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-emerald-100/80">
-          Pay securely by card through Stripe, then follow your donation as each stage is recorded
-          on the Polygon and Ethereum blockchain networks — verifiable on any public block explorer.
+          Two independent layers: a familiar card payment, and an on-chain record anyone can verify.
         </p>
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
-          {networks.map((b) => (
-            <span
-              key={b}
-              className="inline-flex items-center gap-2 rounded-full border border-emerald-800 bg-emerald-900/40 px-4 py-2 text-sm font-semibold text-emerald-100"
-            >
-              <CheckCircle2 size={14} strokeWidth={2.5} className="text-amber-400" /> {b}
+        <div className="mt-12 grid gap-5 text-left sm:grid-cols-2">
+          <div className="rounded-3xl border border-emerald-800 bg-emerald-900/30 p-7">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-900 text-emerald-300 ring-1 ring-emerald-700">
+              <CreditCard size={22} strokeWidth={2.2} />
             </span>
-          ))}
+            <h3 className="mt-5 text-xl font-extrabold text-white">Card payments — Stripe</h3>
+            <p className="mt-2 text-sm leading-relaxed text-emerald-100/80">
+              Donations are paid securely by card through Stripe — a fast, familiar checkout. No
+              crypto wallet required to give.
+            </p>
+          </div>
+          <div className="rounded-3xl border border-emerald-800 bg-emerald-900/30 p-7">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-900 text-emerald-300 ring-1 ring-emerald-700">
+              <Link2 size={22} strokeWidth={2.2} />
+            </span>
+            <h3 className="mt-5 text-xl font-extrabold text-white">Blockchain transparency</h3>
+            <p className="mt-2 text-sm leading-relaxed text-emerald-100/80">
+              Separately, every donation stage is recorded on the Polygon and Ethereum blockchain
+              networks — verifiable by anyone on a public block explorer.
+            </p>
+          </div>
         </div>
       </div>
     </section>

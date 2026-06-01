@@ -257,7 +257,7 @@ export default function NgoDashboard() {
               </p>
             )}
 
-            {loading && <p className="mt-6 text-sm text-zinc-500">Loading your dashboard…</p>}
+            {loading && <DashboardSkeleton />}
 
             {!loading && errorMsg && (
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -323,6 +323,42 @@ export default function NgoDashboard() {
         </main>
       </div>
     </>
+  );
+}
+
+/* ---------- Loading skeleton ---------- */
+function DashboardSkeleton() {
+  return (
+    <div className="mt-3 animate-pulse">
+      {/* welcome line */}
+      <div className="h-9 w-72 rounded-lg bg-zinc-200" />
+
+      {/* stat cards */}
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="h-3 w-20 rounded bg-zinc-200" />
+            <div className="mt-3 h-6 w-16 rounded bg-zinc-200" />
+          </div>
+        ))}
+      </div>
+
+      {/* list block */}
+      <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
+        <div className="h-4 w-40 rounded bg-zinc-200" />
+        <div className="mt-5 space-y-4">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center justify-between gap-3">
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-1/3 rounded bg-zinc-200" />
+                <div className="h-2.5 w-1/2 rounded bg-zinc-100" />
+              </div>
+              <div className="h-6 w-20 rounded-full bg-zinc-200" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

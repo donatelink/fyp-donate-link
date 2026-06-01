@@ -12,7 +12,7 @@ const DIAL_OPTIONS = (() => {
   return out.sort((a, b) => Number(a.dial.slice(1)) - Number(b.dial.slice(1)));
 })();
 
-const MAX_DIGITS = 11;
+const MAX_DIGITS = 10;
 
 const VARIANTS = {
   default: {

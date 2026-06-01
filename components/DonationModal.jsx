@@ -3,14 +3,14 @@ import FeeBreakdown, { calculateFees } from "./FeeBreakdown";
 import supabase from "@/utils/supabase";
 
 const DONATION_TYPES = [
-  { id: "sadaqah", emoji: "🤲", name: "Sadaqah", desc: "Voluntary charity" },
-  { id: "sadaqah-jariyah", emoji: "🌱", name: "Sadaqah Jariyah", desc: "Ongoing impact" },
-  { id: "zakat", emoji: "🌙", name: "Zakat", desc: "Obligatory alms" },
-  { id: "waqf", emoji: "🏛️", name: "Waqf", desc: "Permanent endowment" },
-  { id: "one-time", emoji: "💳", name: "One-Time", desc: "Single donation" },
-  { id: "monthly", emoji: "🔄", name: "Monthly", desc: "Auto recurring" },
-  { id: "campaign", emoji: "🎯", name: "Campaign", desc: "Specific goal" },
-  { id: "emergency", emoji: "🆘", name: "Emergency", desc: "Urgent relief" },
+  { id: "hunger-food", emoji: "🍲", name: "Hunger & Food Crisis", desc: "Meals & food parcels" },
+  { id: "clean-water", emoji: "💧", name: "Clean Water Access", desc: "Wells & safe water" },
+  { id: "children-education", emoji: "📚", name: "Children Education", desc: "Schooling & supplies" },
+  { id: "medical-healthcare", emoji: "🏥", name: "Medical & Healthcare", desc: "Treatment & medicine" },
+  { id: "disaster-relief", emoji: "🚨", name: "Disaster Relief", desc: "Emergency response" },
+  { id: "orphan-care", emoji: "🧒", name: "Orphan Care", desc: "Support for orphans" },
+  { id: "elderly-care", emoji: "🧓", name: "Elderly Care", desc: "Care for elders" },
+  { id: "others", emoji: "🤝", name: "Others", desc: "Any other cause" },
 ];
 
 const PRESET_AMOUNTS = [10, 25, 50, 100, 500];
@@ -81,7 +81,7 @@ export default function DonationModal({ open, onClose, ngo, onDonated }) {
       return;
     }
 
-    const typeLabel = DONATION_TYPES.find((t) => t.id === type)?.name || "One-Time";
+    const typeLabel = DONATION_TYPES.find((t) => t.id === type)?.name || "Others";
 
     const { error } = await supabase.from("donations").insert({
       donor_id: user.id,
@@ -244,8 +244,8 @@ function Footer({ step, canNext, submitting, onBack, onNext }) {
 function StepType({ type, setType }) {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-zinc-900">Donation Type</h3>
-      <p className="text-xs text-zinc-500">Choose what kind of donation you want to give.</p>
+      <h3 className="text-sm font-semibold text-zinc-900">Choose a Cause</h3>
+      <p className="text-xs text-zinc-500">Pick the cause you want to support.</p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {DONATION_TYPES.map((t) => (
           <button

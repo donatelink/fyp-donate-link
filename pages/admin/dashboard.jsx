@@ -328,8 +328,12 @@ export default function AdminDashboard() {
                   <OverviewView
                     ngos={ngos}
                     donations={donations}
+                    ngoStats={ngoStats}
                     pendingCount={pendingCount}
                     totalVolume={totalVolume}
+                    approve={approve}
+                    reject={reject}
+                    actingId={actingId}
                   />
                 )}
                 {view === "approvals" && (
@@ -375,9 +379,28 @@ export default function AdminDashboard() {
 }
 
 /* ---------- Overview ---------- */
-function OverviewView({ ngos, donations, pendingCount, totalVolume }) {
+function OverviewView({ ngos, donations, ngoStats, pendingCount, totalVolume, approve, reject, actingId }) {
   const approved = ngos.filter((n) => n.status === "approved").length;
   const completed = donations.filter((d) => d.stage === 5).length;
+
+  // This-month snapshot
+  const now = new Date();
+  const monthDonations = donations.filter((d) => {
+    const dt = new Date(d.created_at);
+    return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
+  });
+  const monthVolume = monthDonations.reduce((s, d) => s + Number(d.amount), 0);
+  const monthCompleted = monthDonations.filter((d) => d.stage === 5).length;
+  const monthName = now.toLocaleString("default", { month: "long", year: "numeric" });
+
+  // Pending NGO approvals
+  const pendingNgos = ngos.filter((n) => n.status === "pending");
+
+  // Top NGOs by volume
+  const topNgos = [...ngoStats]
+    .filter((n) => n.raised > 0)
+    .sort((a, b) => b.raised - a.raised)
+    .slice(0, 5);
 
   return (
     <>
@@ -390,39 +413,97 @@ function OverviewView({ ngos, donations, pendingCount, totalVolume }) {
         <StatCard label="Total Volume" value={`$${totalVolume}`} />
       </div>
 
+      {/* This Month snapshot */}
       <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-zinc-900">Recent Donations</h2>
-          {donations.length > 0 && (
-            <span className="text-xs text-zinc-500">
-              Latest {Math.min(5, donations.length)} of {donations.length}
-            </span>
+          <h2 className="text-base font-semibold text-zinc-900">This Month</h2>
+          <span className="text-xs text-zinc-500">{monthName}</span>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-4">
+          <div>
+            <div className="text-2xl font-bold text-zinc-900">{monthDonations.length}</div>
+            <div className="text-xs text-zinc-500">Donations</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-zinc-900">${monthVolume}</div>
+            <div className="text-xs text-zinc-500">Volume</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-emerald-600">{monthCompleted}</div>
+            <div className="text-xs text-zinc-500">Completed</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {/* Pending NGO Approvals */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-zinc-900">Pending NGO Approvals</h2>
+            {pendingNgos.length > 0 && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                {pendingNgos.length}
+              </span>
+            )}
+          </div>
+          {pendingNgos.length === 0 ? (
+            <p className="mt-4 text-sm text-zinc-500">No NGOs awaiting approval. 🎉</p>
+          ) : (
+            <ul className="mt-2 divide-y divide-zinc-100">
+              {pendingNgos.slice(0, 5).map((n) => (
+                <li key={n.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-zinc-900">{n.org_name}</div>
+                    <div className="truncate text-xs text-zinc-500">
+                      {n.contact_person || "—"} · {fmtDate(n.created_at)}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      onClick={() => approve(n)}
+                      disabled={actingId === n.id}
+                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {actingId === n.id ? "…" : "Approve"}
+                    </button>
+                    <button
+                      onClick={() => reject(n)}
+                      disabled={actingId === n.id}
+                      className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-        {donations.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">No donations yet.</p>
-        ) : (
-          <ul className="mt-2 divide-y divide-zinc-100">
-            {donations.slice(0, 5).map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <div className="truncate font-medium text-zinc-900">
-                    {d.donor_name || "Donor"}
+
+        {/* Top NGOs by Volume */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
+          <h2 className="text-base font-semibold text-zinc-900">Top NGOs by Volume</h2>
+          {topNgos.length === 0 ? (
+            <p className="mt-4 text-sm text-zinc-500">No donations yet.</p>
+          ) : (
+            <ol className="mt-2 divide-y divide-zinc-100">
+              {topNgos.map((n, i) => (
+                <li key={n.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-zinc-900">{n.org_name}</div>
+                      <div className="text-xs text-zinc-500">{n.donCount} donations</div>
+                    </div>
                   </div>
-                  <div className="truncate text-xs text-zinc-500">
-                    → {d.ngo_name} · {fmtDate(d.created_at)}
-                  </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <span className="font-bold text-zinc-900">${d.amount}</span>
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
-                    {STAGE_LABEL[d.stage]}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <span className="shrink-0 font-bold text-zinc-900">${n.raised}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
       </div>
     </>
   );

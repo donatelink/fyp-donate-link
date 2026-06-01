@@ -309,7 +309,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2">
               <span className="text-2xl">{activeMenu?.icon}</span>
               <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl">{activeMenu?.label}</h1>
-              <span className="ml-auto rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+              <span className="ml-auto rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-emerald-700">
                 Admin
               </span>
             </div>

@@ -233,25 +233,16 @@ export default function BeneficiaryDashboard() {
         />
 
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 animate-page-in">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              {!loading && name && (
-                <p className="text-2xl font-bold text-zinc-700 sm:text-3xl">
-                  Welcome back, <span className="font-extrabold text-emerald-700">{name}</span> 👋
-                </p>
-              )}
+          {!loading && name && (
+            <p className="text-2xl font-bold text-zinc-700 sm:text-3xl">
+              Welcome back, <span className="font-extrabold text-emerald-700">{name}</span> 👋
+            </p>
+          )}
 
-              <h1 className="mt-3 text-xl font-bold text-zinc-900 sm:text-2xl">
-                Get help when you need it
-              </h1>
-              <p className="mt-1 text-sm text-zinc-600">
-                Pick a verified NGO and submit one funding request per month.
-              </p>
-            </div>
-            <span className="shrink-0 rounded-full bg-emerald-100 px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-emerald-700">
-              Beneficiary
-            </span>
-          </div>
+          <h1 className="mt-3 text-xl font-bold text-zinc-900 sm:text-2xl">Get help when you need it</h1>
+          <p className="mt-1 text-sm text-zinc-600">
+            Pick a verified NGO and submit one funding request per month.
+          </p>
 
           {errorMsg && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

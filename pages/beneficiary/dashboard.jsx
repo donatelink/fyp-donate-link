@@ -201,6 +201,12 @@ export default function BeneficiaryDashboard() {
                 Beneficiary
               </span>
               <Link
+                href="/feedback"
+                className="rounded-full border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 hover:border-zinc-400 sm:px-4 sm:text-sm"
+              >
+                Feedback
+              </Link>
+              <Link
                 href="/beneficiary/settings"
                 aria-label="Settings"
                 title="Settings"

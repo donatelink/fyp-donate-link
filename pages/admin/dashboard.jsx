@@ -23,7 +23,15 @@ const MENU = [
   { id: "donors", label: "Donors", icon: "🧑" },
   { id: "beneficiaries", label: "Beneficiaries", icon: "🤝" },
   { id: "requests", label: "Beneficiary Requests", icon: "📥" },
+  { id: "feedback", label: "Feedback", icon: "💬" },
 ];
+
+const FEEDBACK_BADGE = {
+  General: "bg-zinc-100 text-zinc-700",
+  Bug: "bg-red-100 text-red-700",
+  Suggestion: "bg-emerald-100 text-emerald-700",
+  Complaint: "bg-amber-100 text-amber-700",
+};
 
 const REQ_STATUS_LABEL = {
   pending: "Pending",
@@ -51,6 +59,7 @@ export default function AdminDashboard() {
   const [ngos, setNgos] = useState([]);
   const [donations, setDonations] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -66,20 +75,23 @@ export default function AdminDashboard() {
   async function loadAll() {
     setLoading(true);
     setError("");
-    const [ngoRes, donRes, reqRes] = await Promise.all([
+    const [ngoRes, donRes, reqRes, fbRes] = await Promise.all([
       supabase.from("ngos").select("*").order("created_at", { ascending: false }),
       supabase.from("donations").select("*").order("created_at", { ascending: false }),
       supabase
         .from("beneficiary_requests")
         .select("*")
         .order("created_at", { ascending: false }),
+      supabase.from("feedback").select("*").order("created_at", { ascending: false }),
     ]);
     if (ngoRes.error) setError(ngoRes.error.message);
     if (donRes.error) setError(donRes.error.message);
     if (reqRes.error) setError(reqRes.error.message);
+    if (fbRes.error) setError(fbRes.error.message);
     setNgos(ngoRes.data || []);
     setDonations(donRes.data || []);
     setRequests(reqRes.data || []);
+    setFeedback(fbRes.data || []);
     setLoading(false);
   }
 
@@ -369,6 +381,7 @@ export default function AdminDashboard() {
                 {view === "donors" && <DonorsView donors={donors} />}
                 {view === "beneficiaries" && <BeneficiariesView beneficiaries={beneficiaries} />}
                 {view === "requests" && <RequestsView requests={requests} />}
+                {view === "feedback" && <FeedbackView feedback={feedback} />}
               </div>
             )}
           </div>
@@ -990,6 +1003,43 @@ function RequestsView({ requests }) {
             <div className="text-right">
               <div className="font-bold text-zinc-900">${r.amount}</div>
             </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- Feedback ---------- */
+function FeedbackView({ feedback }) {
+  if (feedback.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-10 text-center text-sm text-zinc-500">
+        No feedback submitted yet.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {feedback.map((f) => (
+        <div key={f.id} className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                FEEDBACK_BADGE[f.category] || "bg-zinc-100 text-zinc-700"
+              }`}
+            >
+              {f.category}
+            </span>
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold capitalize text-zinc-600">
+              {f.role}
+            </span>
+            <span className="ml-auto text-xs text-zinc-400">{fmtDate(f.created_at)}</span>
+          </div>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-800">{f.message}</p>
+          <div className="mt-2 text-xs text-zinc-500">
+            {f.name || "—"}
+            {f.email ? ` · ${f.email}` : ""}
           </div>
         </div>
       ))}

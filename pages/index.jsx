@@ -396,25 +396,7 @@ function Blockchain() {
           on the Polygon and Ethereum blockchain networks — verifiable on any public block explorer.
         </p>
 
-        <div className="mt-16 grid grid-cols-2 gap-y-10 sm:grid-cols-5 sm:gap-y-0">
-          {STAGES.map((s, i) => {
-            const I = s.Icon;
-            return (
-              <div key={s.num} className="relative flex flex-col items-center px-2">
-                {i > 0 && (
-                  <span className="absolute right-1/2 top-7 hidden h-px w-full bg-emerald-800 sm:block" />
-                )}
-                <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-900 text-emerald-300 ring-1 ring-emerald-700">
-                  <I size={22} strokeWidth={2.2} />
-                </span>
-                <span className="mt-3 text-sm font-bold text-white">{s.title}</span>
-                <span className="mt-1 text-xs leading-snug text-emerald-200/70">{s.desc}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
           {networks.map((b) => (
             <span
               key={b}

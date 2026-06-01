@@ -121,6 +121,11 @@ export default function Register() {
       return;
     }
 
+    // Beneficiaries must complete their profile before the dashboard.
+    if (form.role === "beneficiary") {
+      router.push("/beneficiary/profile");
+      return;
+    }
     router.push(destForRole(form.role));
   }
 

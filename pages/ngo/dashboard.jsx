@@ -26,6 +26,20 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
+// Fetch beneficiary profiles for a set of requests, keyed by user_id.
+// RLS limits this NGO to profiles of beneficiaries who requested from it.
+async function fetchProfiles(reqList) {
+  const ids = [...new Set((reqList || []).map((r) => r.beneficiary_id).filter(Boolean))];
+  if (ids.length === 0) return {};
+  const { data } = await supabase
+    .from("beneficiary_profiles")
+    .select("*")
+    .in("user_id", ids);
+  const map = {};
+  for (const p of data || []) map[p.user_id] = p;
+  return map;
+}
+
 function StageBadge({ stage }) {
   return (
     <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
@@ -45,6 +59,7 @@ export default function NgoDashboard() {
   const [ngo, setNgo] = useState(null);
   const [donations, setDonations] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [profiles, setProfiles] = useState({});
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const [advanceRec, setAdvanceRec] = useState(null);
@@ -108,6 +123,7 @@ export default function NgoDashboard() {
         if (active) {
           setDonations(donRes.data || []);
           setRequests(reqRes.data || []);
+          setProfiles(await fetchProfiles(reqRes.data || []));
         }
       }
       setLoading(false);
@@ -136,6 +152,7 @@ export default function NgoDashboard() {
       .eq("ngo_id", ngo.id)
       .order("created_at", { ascending: false });
     setRequests(data || []);
+    setProfiles(await fetchProfiles(data || []));
   }
 
   async function handleSignOut() {
@@ -317,7 +334,7 @@ export default function NgoDashboard() {
             )}
 
             {!loading && ngo && view === "requests" && (
-              <RequestsView ngo={ngo} requests={requests} reload={loadRequests} />
+              <RequestsView ngo={ngo} requests={requests} profiles={profiles} reload={loadRequests} />
             )}
           </div>
         </main>
@@ -501,7 +518,7 @@ function DonationsView({
 }
 
 /* ---------- Beneficiary Requests view ---------- */
-function RequestsView({ requests, reload }) {
+function RequestsView({ requests, profiles = {}, reload }) {
   const [actingId, setActingId] = useState(null);
   const [rejectId, setRejectId] = useState(null);
   const [rejectNote, setRejectNote] = useState("");
@@ -556,7 +573,9 @@ function RequestsView({ requests, reload }) {
         </div>
       )}
 
-      {requests.map((r) => (
+      {requests.map((r) => {
+        const p = profiles[r.beneficiary_id];
+        return (
         <div key={r.id} className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
@@ -578,6 +597,36 @@ function RequestsView({ requests, reload }) {
                 {fmtDate(r.created_at)}
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{r.reason}</p>
+
+              {p ? (
+                <dl className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs sm:grid-cols-2">
+                  <div>
+                    <dt className="font-semibold text-zinc-500">Father name</dt>
+                    <dd className="text-zinc-800">{p.father_name}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-zinc-500">Government ID</dt>
+                    <dd className="text-zinc-800">{p.gov_id}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-zinc-500">Phone</dt>
+                    <dd className="text-zinc-800">{p.phone}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-zinc-500">Family members</dt>
+                    <dd className="text-zinc-800">{p.family_members}</dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="font-semibold text-zinc-500">Address</dt>
+                    <dd className="whitespace-pre-wrap text-zinc-800">{p.address}</dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Beneficiary has not completed their profile.
+                </p>
+              )}
+
               {r.proof_url && (
                 <a
                   href={r.proof_url}
@@ -631,7 +680,8 @@ function RequestsView({ requests, reload }) {
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {rejectId && (
         <div

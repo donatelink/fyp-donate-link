@@ -78,6 +78,17 @@ export default function BeneficiaryDashboard() {
         router.replace("/auth/login");
         return;
       }
+      // Gate: a beneficiary must complete their profile before the dashboard.
+      const { data: profile } = await supabase
+        .from("beneficiary_profiles")
+        .select("user_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (!active) return;
+      if (!profile) {
+        router.replace("/beneficiary/profile");
+        return;
+      }
       const [ngoRes, reqRes, ratingRes, userRes] = await Promise.all([
         supabase.from("ngos").select("*").eq("status", "approved").order("org_name"),
         supabase

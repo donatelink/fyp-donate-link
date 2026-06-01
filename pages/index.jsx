@@ -21,7 +21,6 @@ import {
   Quote as QuoteIcon,
   Repeat,
   Send,
-  ShieldCheck,
   Sparkles,
   Star,
   Stethoscope,
@@ -119,9 +118,8 @@ const VOICES = [
 
 const TRUST = [
   { Icon: Repeat, value: "5-Stage", label: "Verified Lifecycle" },
-  { Icon: Link2, value: "On-Chain", label: "Polygon Anchored" },
+  { Icon: Link2, value: "On-Chain", label: "Polygon and Ethereum Blockchain" },
   { Icon: Globe, value: "All Faiths", label: "Open Platform" },
-  { Icon: ShieldCheck, value: "AAOIFI 62", label: "Shariah Compliant" },
 ];
 
 function Logo() {
@@ -180,10 +178,7 @@ function Hero() {
     <section className="relative overflow-hidden bg-gradient-to-b from-amber-50/40 via-white to-white">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-24 pt-16 lg:grid-cols-2 lg:pb-32 lg:pt-24">
         <div className="animate-page-in">
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold text-emerald-700">
-            <Sparkles size={13} strokeWidth={2.5} /> Blockchain-verified · 5-stage lifecycle
-          </span>
-          <h1 className="mt-6 text-5xl font-extrabold leading-[1.05] tracking-tight text-zinc-900 sm:text-6xl">
+          <h1 className="text-5xl font-extrabold leading-[1.05] tracking-tight text-zinc-900 sm:text-6xl">
             Give once.
             <br />
             Follow it the
@@ -208,9 +203,6 @@ function Hero() {
               How it works
             </a>
           </div>
-          <p className="mt-6 text-sm text-zinc-500">
-            Built for Zakat, Sadaqah &amp; Waqf — and open to every faith and nation.
-          </p>
         </div>
 
         <div className="relative animate-page-in">
@@ -262,7 +254,7 @@ function Hero() {
 function TrustStrip() {
   return (
     <section className="border-y border-zinc-200 bg-zinc-50">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-6 py-10 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-10 sm:grid-cols-3">
         {TRUST.map(({ Icon, value, label }) => (
           <div key={label} className="flex items-center gap-4">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
@@ -365,11 +357,8 @@ function Features() {
   return (
     <section id="features" className="mx-auto max-w-7xl px-6 py-24">
       <div className="mx-auto max-w-2xl text-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-700">
-          <ShieldCheck size={12} strokeWidth={2.5} /> Why we're different
-        </span>
-        <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-zinc-900 sm:text-4xl">
-          Trust, by design
+        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 sm:text-4xl">
+          Why we&apos;re different
         </h2>
         <p className="mt-4 text-lg text-zinc-600">
           Built on blockchain, verified by proof, open to everyone.

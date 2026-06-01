@@ -391,32 +391,38 @@ function OverviewView({ ngos, donations, pendingCount, totalVolume }) {
       </div>
 
       <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4 sm:p-6">
-        <h2 className="text-base font-semibold text-zinc-900">Donations by Stage</h2>
-        <div className="mt-4 space-y-3">
-          {[1, 2, 3, 4, 5].map((st) => {
-            const count = donations.filter((d) => d.stage === st).length;
-            const pct = donations.length ? (count / donations.length) * 100 : 0;
-            return (
-              <div key={st}>
-                <div className="flex justify-between text-xs text-zinc-600">
-                  <span>
-                    Stage {st} · {STAGE_LABEL[st]}
-                  </span>
-                  <span className="font-semibold">{count}</span>
-                </div>
-                <div className="mt-1 h-2 overflow-hidden rounded-full bg-zinc-100">
-                  <div
-                    className="h-full rounded-full bg-emerald-500"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-          {donations.length === 0 && (
-            <p className="text-sm text-zinc-500">No donations yet.</p>
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-zinc-900">Recent Donations</h2>
+          {donations.length > 0 && (
+            <span className="text-xs text-zinc-500">
+              Latest {Math.min(5, donations.length)} of {donations.length}
+            </span>
           )}
         </div>
+        {donations.length === 0 ? (
+          <p className="mt-4 text-sm text-zinc-500">No donations yet.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-zinc-100">
+            {donations.slice(0, 5).map((d) => (
+              <li key={d.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <div className="truncate font-medium text-zinc-900">
+                    {d.donor_name || "Donor"}
+                  </div>
+                  <div className="truncate text-xs text-zinc-500">
+                    → {d.ngo_name} · {fmtDate(d.created_at)}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="font-bold text-zinc-900">${d.amount}</span>
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
+                    {STAGE_LABEL[d.stage]}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </>
   );

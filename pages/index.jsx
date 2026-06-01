@@ -9,16 +9,13 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  CreditCard,
   Droplets,
   FileText,
   Globe,
   GraduationCap,
   HandHeart,
-  Hash,
   Heart,
   Link2,
-  Lock,
   Quote as QuoteIcon,
   Repeat,
   Send,
@@ -384,81 +381,48 @@ function Features() {
 }
 
 function Blockchain() {
-  const rows = [
-    { stage: "Pending", hash: "0x9a4f…3b21", status: "verified" },
-    { stage: "Confirmed", hash: "0xb2c1…7d8e", status: "verified" },
-    { stage: "Allocated", hash: "0xfe71…0a99", status: "verified" },
-    { stage: "Transferred", hash: "0x3c08…ad22", status: "verified" },
-    { stage: "Completed", hash: "—", status: "pending" },
-  ];
+  const networks = ["Stripe checkout", "Polygon", "Ethereum", "Public block explorer"];
   return (
     <section id="chain" className="bg-emerald-950">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-24 lg:grid-cols-2">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-900/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-300">
-            <Link2 size={13} strokeWidth={2.5} /> On-chain transparency
-          </span>
-          <h2 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
-            Every step,<br />
-            written to <span className="text-amber-400">the blockchain.</span>
-          </h2>
-          <p className="mt-5 max-w-md text-lg leading-relaxed text-emerald-100/80">
-            Donate securely by card through Stripe — then every donation stage is recorded on the
-            Polygon and Ethereum blockchain networks. Each transition produces a transaction hash
-            you can verify yourself, in any block explorer, outside our platform.
-          </p>
-          <ul className="mt-7 space-y-3 text-sm text-emerald-100">
-            <li className="flex items-start gap-3">
-              <CreditCard size={16} strokeWidth={2.4} className="mt-0.5 shrink-0 text-amber-400" />
-              <span>Card payments via Stripe — fast, secure checkout</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Lock size={16} strokeWidth={2.4} className="mt-0.5 shrink-0 text-amber-400" />
-              <span>Recorded on Polygon &amp; Ethereum — verifiable transaction hashes</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Globe size={16} strokeWidth={2.4} className="mt-0.5 shrink-0 text-amber-400" />
-              <span>Public chain — anyone can audit any donation, any time</span>
-            </li>
-          </ul>
+      <div className="mx-auto max-w-5xl px-6 py-24 text-center">
+        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-900/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-300">
+          <Link2 size={13} strokeWidth={2.5} /> On-chain transparency
+        </span>
+        <h2 className="mx-auto mt-5 max-w-2xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
+          Every donation, <span className="text-amber-400">verifiable</span> end to end.
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-emerald-100/80">
+          Pay securely by card through Stripe, then follow your donation as each stage is recorded
+          on the Polygon and Ethereum blockchain networks — verifiable on any public block explorer.
+        </p>
+
+        <div className="mt-16 grid grid-cols-2 gap-y-10 sm:grid-cols-5 sm:gap-y-0">
+          {STAGES.map((s, i) => {
+            const I = s.Icon;
+            return (
+              <div key={s.num} className="relative flex flex-col items-center px-2">
+                {i > 0 && (
+                  <span className="absolute right-1/2 top-7 hidden h-px w-full bg-emerald-800 sm:block" />
+                )}
+                <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-900 text-emerald-300 ring-1 ring-emerald-700">
+                  <I size={22} strokeWidth={2.2} />
+                </span>
+                <span className="mt-3 text-sm font-bold text-white">{s.title}</span>
+                <span className="mt-1 text-xs leading-snug text-emerald-200/70">{s.desc}</span>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="rounded-3xl border border-emerald-800 bg-emerald-900/30 p-6 shadow-2xl">
-          <div className="flex items-center justify-between border-b border-emerald-800 pb-3 font-mono text-xs">
-            <span className="flex items-center gap-2 text-emerald-300">
-              <Hash size={14} strokeWidth={2.4} />
-              Donation #4193 · audit trail
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-3">
+          {networks.map((b) => (
+            <span
+              key={b}
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-800 bg-emerald-900/40 px-4 py-2 text-sm font-semibold text-emerald-100"
+            >
+              <CheckCircle2 size={14} strokeWidth={2.5} className="text-amber-400" /> {b}
             </span>
-            <span className="rounded-full bg-emerald-700 px-2 py-0.5 text-[10px] font-bold text-emerald-100">
-              VERIFIED
-            </span>
-          </div>
-          <div className="mt-4 space-y-3 font-mono text-xs">
-            {rows.map((r) => (
-              <div key={r.stage} className="flex items-center justify-between">
-                <span className="text-emerald-200">{r.stage}</span>
-                <span className="text-emerald-400">{r.hash}</span>
-                <span
-                  className={
-                    r.status === "verified"
-                      ? "flex items-center gap-1 font-bold text-emerald-300"
-                      : "text-emerald-600"
-                  }
-                >
-                  {r.status === "verified" ? (
-                    <>
-                      <CheckCircle2 size={12} strokeWidth={2.5} /> ok
-                    </>
-                  ) : (
-                    "…"
-                  )}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-4 border-t border-emerald-800 pt-3 font-mono text-[10px] text-emerald-400">
-            polygon mainnet · block 51,209,448
-          </p>
+          ))}
         </div>
       </div>
     </section>

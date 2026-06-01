@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  CreditCard,
   Droplets,
   FileText,
   Globe,
@@ -402,22 +403,22 @@ function Blockchain() {
             written to <span className="text-amber-400">the blockchain.</span>
           </h2>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-emerald-100/80">
-            Donations are anchored on Polygon (cents in gas, no environmental cost) and Ethereum.
-            Every stage transition produces a transaction hash you can verify yourself — in any
-            block explorer, outside our platform.
+            Donate securely by card through Stripe — then every donation stage is recorded on the
+            Polygon and Ethereum blockchain networks. Each transition produces a transaction hash
+            you can verify yourself, in any block explorer, outside our platform.
           </p>
           <ul className="mt-7 space-y-3 text-sm text-emerald-100">
             <li className="flex items-start gap-3">
+              <CreditCard size={16} strokeWidth={2.4} className="mt-0.5 shrink-0 text-amber-400" />
+              <span>Card payments via Stripe — fast, secure checkout</span>
+            </li>
+            <li className="flex items-start gap-3">
               <Lock size={16} strokeWidth={2.4} className="mt-0.5 shrink-0 text-amber-400" />
-              <span>USDT stablecoin — no Gharar, fully Shariah-compliant</span>
+              <span>Recorded on Polygon &amp; Ethereum — verifiable transaction hashes</span>
             </li>
             <li className="flex items-start gap-3">
               <Globe size={16} strokeWidth={2.4} className="mt-0.5 shrink-0 text-amber-400" />
               <span>Public chain — anyone can audit any donation, any time</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <Sparkles size={16} strokeWidth={2.4} className="mt-0.5 shrink-0 text-amber-400" />
-              <span>~$0.01 gas on Polygon — negligible cost per transaction</span>
             </li>
           </ul>
         </div>

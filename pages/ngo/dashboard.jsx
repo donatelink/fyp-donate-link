@@ -252,7 +252,7 @@ export default function NgoDashboard() {
             </div>
 
             {!loading && ngo && (
-              <p className="mt-2 text-lg text-zinc-600 sm:text-xl">
+              <p className="mt-3 text-2xl font-bold text-zinc-700 sm:text-4xl">
                 Welcome to <span className="font-extrabold text-emerald-700">{ngo.org_name}</span>
               </p>
             )}

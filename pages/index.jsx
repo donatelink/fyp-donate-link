@@ -20,6 +20,7 @@ import {
   Quote as QuoteIcon,
   Repeat,
   Send,
+  Siren,
   Sparkles,
   Star,
   Stethoscope,
@@ -91,10 +92,14 @@ const FEATURES = [
 ];
 
 const CAUSES = [
-  { name: "Food & Water", raised: "$3,600", pct: 72, accent: "emerald", tag: "Hunger & Food", Icon: Utensils },
-  { name: "Orphan Care", raised: "$1,200", pct: 30, accent: "amber", tag: "Orphan Care", Icon: Baby },
-  { name: "Education", raised: "$2,730", pct: 91, accent: "emerald", tag: "Children Education", Icon: GraduationCap },
-  { name: "Medical Aid", raised: "$9,000", pct: 45, accent: "amber", tag: "Medical & Healthcare", Icon: Stethoscope },
+  { name: "Hunger & Food Crisis", raised: "$3,600", pct: 72, accent: "emerald", Icon: Utensils },
+  { name: "Clean Water Access", raised: "$2,150", pct: 54, accent: "amber", Icon: Droplets },
+  { name: "Children Education", raised: "$2,730", pct: 91, accent: "emerald", Icon: GraduationCap },
+  { name: "Medical & Healthcare", raised: "$9,000", pct: 45, accent: "amber", Icon: Stethoscope },
+  { name: "Disaster Relief", raised: "$5,400", pct: 63, accent: "emerald", Icon: Siren },
+  { name: "Orphan Care", raised: "$1,200", pct: 30, accent: "amber", Icon: Baby },
+  { name: "Elderly Care", raised: "$1,850", pct: 48, accent: "emerald", Icon: HandHeart },
+  { name: "Others", raised: "$980", pct: 22, accent: "amber", Icon: Globe },
 ];
 
 const VOICES = [
@@ -435,12 +440,6 @@ function Causes() {
               Causes open right now
             </h2>
           </div>
-          <Link
-            href="/auth/register"
-            className="inline-flex items-center gap-1 text-sm font-bold text-emerald-700 underline-offset-4 hover:underline"
-          >
-            Browse all <ChevronRight size={14} strokeWidth={2.5} />
-          </Link>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {CAUSES.map((c) => {

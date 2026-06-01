@@ -1,16 +1,26 @@
+import {
+  Baby,
+  Droplets,
+  Globe,
+  GraduationCap,
+  HandHeart,
+  Siren,
+  Stethoscope,
+  Utensils,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import FeeBreakdown, { calculateFees } from "./FeeBreakdown";
 import supabase from "@/utils/supabase";
 
 const DONATION_TYPES = [
-  { id: "hunger-food", emoji: "🍲", name: "Hunger & Food Crisis", desc: "Meals & food parcels" },
-  { id: "clean-water", emoji: "💧", name: "Clean Water Access", desc: "Wells & safe water" },
-  { id: "children-education", emoji: "📚", name: "Children Education", desc: "Schooling & supplies" },
-  { id: "medical-healthcare", emoji: "🏥", name: "Medical & Healthcare", desc: "Treatment & medicine" },
-  { id: "disaster-relief", emoji: "🚨", name: "Disaster Relief", desc: "Emergency response" },
-  { id: "orphan-care", emoji: "🧒", name: "Orphan Care", desc: "Support for orphans" },
-  { id: "elderly-care", emoji: "🧓", name: "Elderly Care", desc: "Care for elders" },
-  { id: "others", emoji: "🤝", name: "Others", desc: "Any other cause" },
+  { id: "hunger-food", Icon: Utensils, name: "Hunger & Food Crisis", desc: "Meals & food parcels" },
+  { id: "clean-water", Icon: Droplets, name: "Clean Water Access", desc: "Wells & safe water" },
+  { id: "children-education", Icon: GraduationCap, name: "Children Education", desc: "Schooling & supplies" },
+  { id: "medical-healthcare", Icon: Stethoscope, name: "Medical & Healthcare", desc: "Treatment & medicine" },
+  { id: "disaster-relief", Icon: Siren, name: "Disaster Relief", desc: "Emergency response" },
+  { id: "orphan-care", Icon: Baby, name: "Orphan Care", desc: "Support for orphans" },
+  { id: "elderly-care", Icon: HandHeart, name: "Elderly Care", desc: "Care for elders" },
+  { id: "others", Icon: Globe, name: "Others", desc: "Any other cause" },
 ];
 
 const PRESET_AMOUNTS = [10, 25, 50, 100, 500];
@@ -27,7 +37,7 @@ export default function DonationModal({ open, onClose, ngo, onDonated }) {
   const [step, setStep] = useState(0);
   const [type, setType] = useState(null);
   const [amount, setAmount] = useState(50);
-  const [customAmount, setCustomAmount] = useState("");
+  const [customAmount, setCustomAmount] = useState("50");
   const [method, setMethod] = useState("polygon");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -38,7 +48,7 @@ export default function DonationModal({ open, onClose, ngo, onDonated }) {
     setStep(0);
     setType(null);
     setAmount(50);
-    setCustomAmount("");
+    setCustomAmount("50");
     setMethod("polygon");
     setSubmitting(false);
     setErrorMsg("");
@@ -247,21 +257,30 @@ function StepType({ type, setType }) {
       <h3 className="text-sm font-semibold text-zinc-900">Choose a Cause</h3>
       <p className="text-xs text-zinc-500">Pick the cause you want to support.</p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {DONATION_TYPES.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setType(t.id)}
-            className={`rounded-xl border p-3 text-left transition ${
-              type === t.id
-                ? "border-emerald-500 bg-emerald-50"
-                : "border-zinc-200 bg-white hover:border-zinc-300"
-            }`}
-          >
-            <div className="text-xl">{t.emoji}</div>
-            <div className="mt-1 text-sm font-semibold text-zinc-900">{t.name}</div>
-            <div className="text-xs text-zinc-500">{t.desc}</div>
-          </button>
-        ))}
+        {DONATION_TYPES.map((t) => {
+          const I = t.Icon;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setType(t.id)}
+              className={`rounded-xl border p-3 text-left transition ${
+                type === t.id
+                  ? "border-emerald-500 bg-emerald-50"
+                  : "border-zinc-200 bg-white hover:border-zinc-300"
+              }`}
+            >
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                  type === t.id ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-600"
+                }`}
+              >
+                <I size={18} strokeWidth={2.2} />
+              </span>
+              <div className="mt-2 text-sm font-semibold text-zinc-900">{t.name}</div>
+              <div className="text-xs text-zinc-500">{t.desc}</div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -279,10 +298,10 @@ function StepAmount({ amount, setAmount, customAmount, setCustomAmount }) {
             key={a}
             onClick={() => {
               setAmount(a);
-              setCustomAmount("");
+              setCustomAmount(String(a));
             }}
             className={`rounded-lg border py-3 text-sm font-semibold transition ${
-              !customAmount && amount === a
+              Number(customAmount) === a
                 ? "border-emerald-500 bg-emerald-50 text-emerald-700"
                 : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
             }`}

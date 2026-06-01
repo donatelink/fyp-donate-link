@@ -72,12 +72,12 @@ const FEATURES = [
   {
     Icon: Link2,
     title: "Blockchain transparency",
-    body: "Every stage of every donation is anchored on Polygon — anyone can verify the chain of custody from donor to beneficiary.",
+    body: "Every donation stage is securely recorded on the Polygon and Ethereum blockchain networks, allowing donors to verify the complete transaction journey from donor to beneficiary.",
   },
   {
     Icon: Camera,
     title: "Proof at every step",
-    body: "NGOs upload a photo, receipt or PDF at each of the 5 stages — donors and beneficiaries see receipts, not promises.",
+    body: "NGO upload photo as a proof after transferring the received funds, beneficiary receive their payment and donor updated with completed status.",
   },
   {
     Icon: Star,
@@ -87,7 +87,7 @@ const FEATURES = [
   {
     Icon: Globe,
     title: "Open to all",
-    body: "Islamic causes (Zakat · Sadaqah · Waqf) and global causes (food, water, education, medical) — every faith, every nation.",
+    body: "Open to all Causes you can support (Food & Hunger, Childcare, Health & Medical, Education, Disaster & Emergency Relief, Small Business Support, General Charity / Open Donation, Elderly & Disabled Support).",
   },
 ];
 

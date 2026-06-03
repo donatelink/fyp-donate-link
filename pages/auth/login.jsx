@@ -47,6 +47,9 @@ export default function Login() {
         Date.now() - new Date(session.user.created_at).getTime() < 120000;
       if (pendingRole && isNew && pendingRole !== profile?.role) {
         await supabase.from("users").update({ role: pendingRole }).eq("id", session.user.id);
+        // Mirror the role into auth metadata so it's visible under
+        // Authentication → Users (manual signups already store it there).
+        await supabase.auth.updateUser({ data: { role: pendingRole } });
         profile = { role: pendingRole };
       }
 

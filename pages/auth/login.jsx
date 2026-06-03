@@ -30,11 +30,26 @@ export default function Login() {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session || !active) return;
-      const { data: profile } = await supabase
+
+      // A Google sign-up stashes the chosen role (OAuth carries none, so the
+      // trigger defaults new users to "donor"). Apply it once, for new accounts.
+      const pendingRole =
+        typeof window !== "undefined" ? window.localStorage.getItem("pendingRole") : null;
+      if (pendingRole) window.localStorage.removeItem("pendingRole");
+
+      let { data: profile } = await supabase
         .from("users")
         .select("role")
         .eq("id", session.user.id)
         .maybeSingle();
+
+      const isNew =
+        Date.now() - new Date(session.user.created_at).getTime() < 120000;
+      if (pendingRole && isNew && pendingRole !== profile?.role) {
+        await supabase.from("users").update({ role: pendingRole }).eq("id", session.user.id);
+        profile = { role: pendingRole };
+      }
+
       if (active) router.replace(destForRole(profile?.role));
     })();
     return () => {

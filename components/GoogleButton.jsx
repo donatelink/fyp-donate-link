@@ -1,8 +1,12 @@
 import supabase from "@/utils/supabase";
 
-export default function GoogleButton({ label = "Continue with Google", disabled }) {
+export default function GoogleButton({ label = "Continue with Google", disabled, role }) {
   async function handleClick() {
     if (typeof window === "undefined") return;
+    // Sign-up flows pass the chosen role; stash it so the OAuth callback
+    // (which lands on /auth/login) can apply it to the new account.
+    if (role) window.localStorage.setItem("pendingRole", role);
+    else window.localStorage.removeItem("pendingRole");
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/login` },
